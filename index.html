@@ -1,0 +1,2506 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DouradoKids | Funcional Kids + Locação de Brinquedos</title>
+
+  <!-- Fonte clean -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Leaflet (mapa com pins dinâmicos) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root{
+      /* =========================
+         🎨 Paleta
+      ========================== */
+      --primary:#FF7A18;
+      --primary2:#FFB703;
+      --bg:#ffffff;
+      --alt:#FFF6F1;
+      --text:#111111;
+      --muted:#6B7280;
+      --border:#EAEAEA;
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+      --shadow2: 0 18px 60px rgba(0,0,0,.10);
+
+      --r-xl: 36px;
+      --r-lg: 28px;
+      --r-md: 18px;
+
+      --container: 1180px;
+      --gutter: 24px;
+
+      /* kids accents */
+      --kid-a:#35C6F4; /* azul */
+      --kid-b:#8B5CF6; /* roxo */
+      --kid-c:#22C55E; /* verde */
+      --kid-d:#F43F5E; /* rosa */
+      --kid-e:#F59E0B; /* amarelo */
+
+      /* =========================
+         🖼️ IMAGENS (todas por link)
+      ========================== */
+      --img-hero-bg: url("https://a-static.besthdwallpaper.com/kids-playing-enjoying-holi-together-wallpaper-1680x1050-110680_5.jpg");
+      --img-trust:   url("https://images.unsplash.com/photo-1526958977630-bc61b30a2009?auto=format&fit=crop&w=2000&q=85");
+      --img-for:     url("https://images.unsplash.com/photo-1602030028438-94a1fbd06f28?auto=format&fit=crop&w=2000&q=85");
+      --img-right:   url("https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=2200&q=85");
+      --img-cta:     url("https://images.unsplash.com/photo-1542736667-069246bdbc74?auto=format&fit=crop&w=2000&q=85");
+
+      /* =========================================================
+         ✅ CONTROLES DO HERO (agora do jeito que você pediu)
+         1) ALTURA (corte por altura do container):
+            - heroHDelta: -10 diminui a altura (corta mais), +10 aumenta a altura (corta menos)
+         2) ENQUADRAMENTO X e Y (pan):
+            - heroPanX e heroPanY em passos (inteiros)
+         3) ZOOM (continua existindo, opcional)
+
+         Você pode controlar:
+         - manualmente aqui (valores inteiros)
+         - ou pelo painel (Hero Tuner) no JS (HERO_TUNER_ENABLED = true)
+      ========================================================= */
+
+      /* altura base do bloco do hero (desktop) */
+      --heroHBase: 560px;
+      /* quanto cada "1" altera a altura (ex: -10 => -10*12px = -120px) */
+      --heroHStep: 12px;
+      /* o valor que você vai ajustar: -10, 0, +10... */
+      --heroHDelta: 0;
+
+      /* altura base do hero no mobile (pode ser diferente) */
+      --heroHBaseMobile: 520px;
+
+      /* enquadramento */
+      --heroPanStep: 4%;
+      --heroPanX: 0;  /* -10 a +10 */
+      --heroPanY: 0;  /* -10 a +10 */
+
+      /* zoom (opcional) */
+      --heroZoom: 0;             /* -10 a +10 */
+      --heroScaleBase: 1.02;     /* base */
+      --heroScaleStep: 0.025;    /* passo */
+
+      /* =========================
+         Ajustes finos
+      ========================== */
+      --heroOverlay: rgba(0,0,0,.08);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: "Manrope", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:var(--bg);
+      overflow-x:hidden;
+    }
+    a{color:inherit; text-decoration:none}
+    img{max-width:100%; display:block}
+    button{font-family:inherit}
+
+    .container{
+      width:min(var(--container), calc(100% - (var(--gutter) * 2)));
+      margin:0 auto;
+    }
+
+    .muted{color:var(--muted)}
+    .pill{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:12px 18px;
+      border-radius:999px;
+      border:1px solid transparent;
+      font-weight:800;
+      line-height:1;
+      cursor:pointer;
+      transition: all .18s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .pill--primary{
+      background: linear-gradient(135deg, var(--primary), var(--kid-a));
+      color:#fff;
+      box-shadow: 0 12px 30px rgba(255,122,24,.24);
+    }
+    .pill--primary:hover{filter:brightness(.97); transform:translateY(-1px); box-shadow: 0 16px 36px rgba(255,122,24,.28)}
+    .pill--ghost{
+      background:transparent;
+      border-color:rgba(0,0,0,.08);
+      color:var(--text);
+    }
+    .pill--ghost:hover{background:rgba(0,0,0,.03); transform:translateY(-1px)}
+    .pill--outline{
+      background:#fff;
+      border-color:rgba(255,122,24,.55);
+      color:var(--primary);
+    }
+    .pill--outline:hover{background:rgba(255,122,24,.06); transform:translateY(-1px)}
+    .badgeMini{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 14px;
+      border-radius:999px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow: var(--shadow);
+      font-weight:900;
+      color:#111;
+      font-size:13px;
+    }
+    .badgeMini .dot{
+      width:10px; height:10px; border-radius:999px;
+      background: var(--kid-a);
+      box-shadow: 0 0 0 6px rgba(53,198,244,.14);
+    }
+    .badgeMini:nth-child(2) .dot{background:var(--kid-c); box-shadow:0 0 0 6px rgba(34,197,94,.14)}
+    .badgeMini:nth-child(3) .dot{background:var(--kid-b); box-shadow:0 0 0 6px rgba(139,92,246,.14)}
+
+    .section{
+      padding:96px 0;
+      position:relative;
+      overflow:hidden;
+    }
+    .section--alt{background:var(--alt)}
+    .kicker{
+      color:var(--primary);
+      font-weight:900;
+      letter-spacing:.08em;
+      font-size:12px;
+      text-transform:uppercase;
+      display:flex; align-items:center; gap:10px;
+      margin:0 0 14px;
+    }
+    .kicker .dot{
+      width:8px; height:8px; border-radius:999px;
+      background: linear-gradient(135deg, var(--primary), var(--kid-d));
+      box-shadow: 0 0 0 6px rgba(255,122,24,.12);
+    }
+    h1,h2,h3{margin:0}
+    .h1{
+      font-size: clamp(32px, 4vw, 54px);
+      line-height:1.05;
+      letter-spacing:-.02em;
+      font-weight:900;
+    }
+    .h2{
+      font-size: clamp(26px, 3vw, 40px);
+      line-height:1.12;
+      letter-spacing:-.02em;
+      font-weight:900;
+    }
+    .h3{
+      font-size:20px;
+      line-height:1.2;
+      font-weight:900;
+    }
+    .lead{
+      font-size:18px;
+      line-height:1.6;
+      color:var(--muted);
+      margin:0;
+      font-weight:700;
+    }
+
+    /* HEADER */
+    .header{
+      position:sticky;
+      top:0;
+      z-index:50;
+      background:#fff;
+      border-bottom:1px solid rgba(0,0,0,.06);
+    }
+    .header__inner{
+      height:72px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-weight:900;
+      letter-spacing:-.02em;
+      min-width:0;
+    }
+    .brand__mark{
+      width:40px; height:40px;
+      border-radius:14px;
+      background:linear-gradient(135deg, var(--primary), var(--kid-a));
+      display:grid; place-items:center;
+      box-shadow: 0 12px 26px rgba(255,122,24,.18);
+      position:relative;
+      overflow:hidden;
+      flex: 0 0 auto;
+    }
+    .brand__mark::after{
+      content:"";
+      position:absolute; inset:-30%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), transparent 55%);
+      transform:rotate(18deg);
+    }
+    .brand__mark span{
+      color:#fff; font-weight:900; font-size:20px;
+      position:relative;
+    }
+    .brand__name{
+      display:flex; flex-direction:column;
+      line-height:1.05;
+      min-width:0;
+    }
+    .brand__name b{font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .brand__name small{font-size:12px; color:var(--muted); font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+    .nav{
+      display:flex; align-items:center; gap:22px;
+      color:#2b2b2b;
+      font-weight:800;
+      font-size:14px;
+    }
+    .nav a{opacity:.92}
+    .nav a:hover{opacity:1; text-decoration:underline; text-underline-offset: 6px}
+
+    .header__cta{
+      display:flex; align-items:center; gap:12px;
+      flex: 0 0 auto;
+    }
+
+    .hamb{
+      display:none;
+      width:44px; height:44px;
+      border-radius:14px;
+      border:1px solid rgba(0,0,0,.08);
+      background:#fff;
+      box-shadow: 0 10px 24px rgba(0,0,0,.06);
+      cursor:pointer;
+    }
+    .hamb svg{width:20px; height:20px; stroke:#111; fill:none; stroke-width:2; stroke-linecap:round}
+    .mobileMenu{
+      display:none;
+      padding:14px 0 18px;
+      border-top:1px solid rgba(0,0,0,.06);
+      background:#fff;
+    }
+    .mobileMenu a{
+      display:block;
+      padding:12px 0;
+      font-weight:900;
+      color:#1a1a1a;
+    }
+    .mobileMenu .menuCtas{
+      padding: 10px 0 4px;
+      border-bottom: 1px dashed rgba(0,0,0,.10);
+      margin-bottom: 10px;
+    }
+    .mobileMenu .menuCtas a{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 0;
+      font-weight:900;
+    }
+    .mobileMenu .menuCtas a small{
+      color:var(--muted);
+      font-weight:900;
+      font-size:12px;
+    }
+
+    /* HERO */
+    .hero{ padding:28px 0 0; position:relative; }
+
+    .hero__wrap{
+      position:relative;
+      border-radius: var(--r-xl);
+      overflow:hidden;
+      box-shadow: var(--shadow2);
+      border:1px solid rgba(0,0,0,.06);
+      background:#f4f4f4;
+
+      /* ✅ AQUI É O “CORTE POR ALTURA” QUE VOCÊ QUER:
+         - diminui a altura = corta mais (topo/baixo)
+         - aumenta a altura = corta menos
+         Ajuste via --heroHDelta (-10, +10...)
+      */
+      min-height: calc(var(--heroHBase) + (var(--heroHDelta) * var(--heroHStep)));
+    }
+
+    /* ✅ Painel de ajuste (opcional, via JS) */
+    .heroTuner{
+      position:absolute;
+      top:16px;
+      right:16px;
+      z-index:5;
+      padding:12px;
+      border-radius:18px;
+      border:1px solid rgba(0,0,0,.08);
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 16px 44px rgba(0,0,0,.12);
+      backdrop-filter: blur(8px);
+      display:none; /* só aparece se habilitar no JS */
+      width: min(360px, calc(100% - 32px));
+    }
+    .heroTuner h4{
+      margin:0 0 10px;
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-weight:900;
+      color:#111;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+    }
+    .heroTuner .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:8px 0;
+      border-top:1px dashed rgba(0,0,0,.12);
+    }
+    .heroTuner .row:first-of-type{border-top:none; padding-top:0}
+    .heroTuner .lbl{
+      font-weight:900;
+      font-size:12px;
+      color:#111;
+      display:flex; flex-direction:column;
+      gap:2px;
+      min-width: 160px;
+    }
+    .heroTuner .lbl small{
+      font-weight:900;
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.02em;
+      text-transform:none;
+    }
+    .heroTuner .ctrl{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex: 0 0 auto;
+    }
+    .heroTuner .val{
+      min-width:52px;
+      text-align:center;
+      font-weight:900;
+      font-size:12px;
+      color:#111;
+      background: rgba(0,0,0,.04);
+      border:1px solid rgba(0,0,0,.08);
+      padding:8px 10px;
+      border-radius:12px;
+    }
+    .heroTuner button{
+      width:36px; height:36px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,.10);
+      background:#fff;
+      cursor:pointer;
+      font-weight:900;
+      box-shadow: 0 10px 24px rgba(0,0,0,.06);
+      transition: all .15s ease;
+    }
+    .heroTuner button:hover{transform: translateY(-1px)}
+    .heroTuner .reset{
+      border:1px solid rgba(255,122,24,.35);
+      color:var(--primary);
+      background: rgba(255,122,24,.06);
+      width:auto;
+      padding:0 12px;
+      height:32px;
+      border-radius:999px;
+      font-size:12px;
+      box-shadow:none;
+    }
+
+    .hero__bg{
+      position:absolute; inset:0;
+      background:
+        radial-gradient(80% 120% at 25% 10%, rgba(255,122,24,.12), transparent 55%),
+        radial-gradient(80% 120% at 75% 65%, rgba(53,198,244,.18), transparent 60%),
+        radial-gradient(70% 90% at 15% 75%, rgba(139,92,246,.14), transparent 55%),
+        linear-gradient(0deg, var(--heroOverlay), var(--heroOverlay)),
+        var(--img-hero-bg);
+      background-size: cover;
+
+      /* ✅ ENQUADRAMENTO X e Y (inteiros) */
+      background-position:
+        calc(50% + (var(--heroPanX) * var(--heroPanStep)))
+        calc(50% + (var(--heroPanY) * var(--heroPanStep)));
+
+      filter: saturate(1.07);
+
+      /* ✅ zoom (opcional) */
+      transform:
+        scale(
+          calc(
+            var(--heroScaleBase) + (var(--heroZoom) * var(--heroScaleStep))
+          )
+        );
+    }
+    .hero__bg::after{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(circle at 15% 20%, rgba(255,255,255,.28), transparent 60%);
+    }
+
+    .hero__content{
+      position:relative;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:22px;
+      padding: 44px;
+      align-items:center;
+    }
+    .heroCard{
+      background:#fff;
+      border-radius: 44px;
+      box-shadow: var(--shadow2);
+      border:1px solid rgba(0,0,0,.06);
+      padding: 34px 34px 30px;
+      max-width: 700px;
+    }
+    .heroCard p{margin:16px 0 18px}
+    .heroActions{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+    .heroLink{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      font-weight:900;
+      color:#111;
+      opacity:.9;
+      padding:10px 6px;
+    }
+    .heroLink:hover{opacity:1; text-decoration:underline; text-underline-offset:6px}
+    .heroLink svg{width:16px; height:16px; stroke:#111}
+
+    .heroMiniBadges{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top: 14px;
+    }
+
+    /* STATS */
+    .stats{ padding: 24px 0 0; }
+    .stats__bar{
+      margin-top:22px;
+      border-top:1px solid rgba(0,0,0,.08);
+      padding: 18px 0;
+    }
+    .statsGrid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      border-radius: 18px;
+      overflow:hidden;
+      background: rgba(255,255,255,.70);
+      border: 1px solid rgba(0,0,0,.06);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(6px);
+    }
+    .stat{
+      padding:18px 22px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      position:relative;
+    }
+    .stat:not(:last-child)::after{
+      content:"";
+      position:absolute;
+      top:18px; bottom:18px; right:0;
+      width:1px;
+      background: rgba(0,0,0,.08);
+    }
+    .stat .ico{
+      width:36px; height:36px;
+      border-radius: 14px;
+      border:1px solid rgba(0,0,0,.06);
+      display:grid; place-items:center;
+      background: linear-gradient(135deg, rgba(255,122,24,.10), rgba(53,198,244,.10));
+    }
+    .stat:nth-child(2) .ico{background:linear-gradient(135deg, rgba(34,197,94,.12), rgba(255,183,3,.10))}
+    .stat:nth-child(3) .ico{background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(244,63,94,.10))}
+    .stat:nth-child(4) .ico{background:linear-gradient(135deg, rgba(53,198,244,.12), rgba(255,122,24,.10))}
+    .stat .ico svg{width:20px; height:20px; stroke:var(--primary); fill:none; stroke-width:2}
+    .stat b{font-size:18px; font-weight:900}
+    .stat span{font-size:14px; color:var(--muted); font-weight:800}
+
+    /* 2-col sections */
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 42px;
+      align-items:center;
+    }
+
+    /* TRUST */
+    .trustLeft{ position:relative; min-height: 420px; }
+    .trustOrange{
+      position:absolute; left:0; top:0;
+      width: 78%; height: 72%;
+      background: linear-gradient(135deg, var(--primary), var(--kid-b));
+      border-radius: 28px;
+      box-shadow: 0 22px 70px rgba(255,122,24,.20);
+    }
+    .trustPhoto{
+      position:absolute;
+      left: 26px; top: 64px;
+      width: 72%;
+      border-radius: 28px;
+      overflow:hidden;
+      border: 1px solid rgba(0,0,0,.06);
+      box-shadow: var(--shadow2);
+      background: var(--img-trust);
+      background-size: cover;
+      background-position:center;
+      aspect-ratio: 4/3;
+    }
+    .stamp{
+      position:absolute;
+      left: 16px;
+      bottom: 6px;
+      width: 104px; height:104px;
+      border-radius: 999px;
+      background: #fff;
+      border: 6px solid rgba(255,122,24,.18);
+      box-shadow: var(--shadow);
+      display:grid; place-items:center;
+    }
+    .stamp .inner{
+      width:72px; height:72px;
+      border-radius:999px;
+      background: linear-gradient(135deg, var(--primary), var(--kid-a));
+      display:grid; place-items:center;
+      color:#fff;
+      font-weight:900;
+      font-size:28px;
+      position:relative;
+      overflow:hidden;
+    }
+    .stamp .inner::after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), transparent 55%);
+      transform:rotate(18deg);
+    }
+
+    /* TESTIMONIALS */
+    .tHead{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:18px;
+      margin-bottom: 22px;
+    }
+    .tNav{display:flex; gap:10px;}
+    .navBtn{
+      width:46px; height:46px;
+      border-radius:999px;
+      border:none;
+      background: linear-gradient(135deg, var(--primary), var(--kid-a));
+      box-shadow: 0 14px 30px rgba(255,122,24,.18);
+      display:grid; place-items:center;
+      cursor:pointer;
+      transition: all .18s ease;
+    }
+    .navBtn:hover{filter:brightness(.97); transform: translateY(-1px)}
+    .navBtn svg{width:20px; height:20px; stroke:#fff; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+
+    .carousel{position:relative;}
+    .track{
+      display:flex;
+      overflow-x:auto;
+      scroll-snap-type:x mandatory;
+      scroll-behavior:smooth;
+      padding: 0;
+      scrollbar-width: none;
+      border-radius: 18px;
+    }
+    .track::-webkit-scrollbar{display:none}
+
+    .tCard{
+      scroll-snap-align:start;
+      flex: 0 0 100%;
+      min-width: 100%;
+      padding:16px 16px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(0,0,0,.06);
+      background:#fff;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .tCard::before{
+      content:"";
+      position:absolute; inset:0;
+      background-image: radial-gradient(rgba(0,0,0,.07) 1px, transparent 1px);
+      background-size: 12px 12px;
+      opacity:.10;
+      pointer-events:none;
+    }
+    .tTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      position:relative;
+    }
+    .tUser{
+      display:flex; align-items:center; gap:12px;
+      position:relative;
+    }
+    .avatar{
+      width:38px; height:38px;
+      border-radius:999px;
+      background: linear-gradient(135deg, rgba(53,198,244,.18), rgba(139,92,246,.18));
+      border:1px solid rgba(0,0,0,.06);
+      overflow:hidden;
+    }
+    .avatar img{width:100%; height:100%; object-fit:cover}
+    .tName{font-weight:900; font-size:14px}
+    .tWhen{font-size:12px; color:var(--muted); font-weight:900}
+    .gIcon{
+      width:28px; height:28px;
+      border-radius: 999px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,.06);
+      display:grid; place-items:center;
+      position:relative;
+    }
+    .stars{
+      display:flex; align-items:center; gap:4px;
+      margin:10px 0 8px;
+      position:relative;
+    }
+    .star{width:16px; height:16px; fill: #F59E0B; stroke:none;}
+    .verified{
+      width:16px; height:16px;
+      border-radius:999px;
+      background:#2563EB;
+      display:grid; place-items:center;
+      margin-left:6px;
+    }
+    .verified svg{width:12px; height:12px; stroke:#fff; fill:none; stroke-width:2}
+    .tText{
+      margin:0;
+      color:#2c2c2c;
+      font-weight:800;
+      line-height:1.55;
+      font-size:13.5px;
+      position:relative;
+      max-width: 920px;
+    }
+
+    /* PARA QUEM É */
+    .list{
+      margin-top:18px;
+      border-top:1px solid rgba(0,0,0,.08);
+    }
+    .li{
+      display:flex; align-items:center; gap:14px;
+      padding:16px 0;
+      border-bottom:1px solid rgba(0,0,0,.08);
+      font-weight:900;
+    }
+    .li .liIc{
+      width:34px; height:34px; border-radius:12px;
+      border:1px solid rgba(0,0,0,.06);
+      background: linear-gradient(135deg, rgba(255,122,24,.12), rgba(53,198,244,.12));
+      display:grid; place-items:center;
+    }
+    .li:nth-child(2) .liIc{background:linear-gradient(135deg, rgba(34,197,94,.12), rgba(255,183,3,.12))}
+    .li:nth-child(3) .liIc{background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(244,63,94,.12))}
+    .li .liIc svg{width:18px; height:18px; stroke:var(--primary); fill:none; stroke-width:2}
+
+    .forPhoto{
+      position:relative;
+      border-radius: 46px;
+      overflow:hidden;
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow: var(--shadow2);
+      background:
+        radial-gradient(80% 80% at 30% 20%, rgba(255,255,255,.18), transparent 60%),
+        var(--img-for);
+      background-size:cover;
+      background-position:center;
+      aspect-ratio: 16/12;
+      min-height: 420px;
+    }
+    .stamp--mid{
+      position:absolute;
+      left:-18px;
+      top: 52%;
+      transform: translateY(-50%);
+      width:96px; height:96px;
+      border:6px solid rgba(255,122,24,.18);
+    }
+
+    /* PROCESSO */
+    .center{text-align:center; max-width: 860px; margin:0 auto 26px;}
+    .processRow{
+      display:flex;
+      gap:18px;
+      align-items:stretch;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-top: 22px;
+    }
+    .stepCard{
+      width: 240px;
+      padding:18px 18px 16px;
+      border-radius: 18px;
+      border:1px solid rgba(0,0,0,.06);
+      background:#fff;
+      box-shadow: var(--shadow);
+      text-align:left;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .stepPill{
+      align-self:flex-start;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.06em;
+      color:#fff;
+      background: linear-gradient(135deg, var(--primary), var(--kid-d));
+      padding:8px 12px;
+      border-radius:999px;
+    }
+    .stepCard:nth-child(3) .stepPill{background:linear-gradient(135deg, var(--kid-a), var(--kid-b))}
+    .stepCard:nth-child(5) .stepPill{background:linear-gradient(135deg, var(--kid-c), var(--kid-e))}
+    .op{
+      font-size:36px;
+      font-weight:900;
+      color:#111;
+      opacity:.7;
+      display:grid;
+      place-items:center;
+      width: 36px;
+    }
+    .finalCard{
+      border:1.5px solid rgba(255,122,24,.40);
+      box-shadow: 0 18px 40px rgba(255,122,24,.08);
+      display:grid;
+      place-items:center;
+      gap:12px;
+      text-align:center;
+      background: linear-gradient(135deg, rgba(255,255,255,1), rgba(53,198,244,.06));
+    }
+    .finalCard svg{width:26px; height:26px; stroke:var(--primary); fill:none; stroke-width:2}
+
+    /* Manifesto */
+    .quote{
+      margin-top:14px;
+      padding-left:18px;
+      border-left:3px solid rgba(255,122,24,.30);
+      color:var(--muted);
+      font-weight:800;
+      line-height:1.7;
+    }
+    .rightPhoto{
+      border-radius: 28px;
+      overflow:hidden;
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow: var(--shadow2);
+      background:
+        radial-gradient(90% 90% at 30% 20%, rgba(255,255,255,.18), transparent 60%),
+        var(--img-right);
+      background-size:cover;
+      background-position:center;
+      aspect-ratio: 16/10;
+      min-height: 340px;
+    }
+
+    /* BENEFÍCIOS */
+    .benefGrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:18px;
+      margin-top: 22px;
+    }
+    .bCard{
+      padding:20px 20px 18px;
+      border-radius: 18px;
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow: var(--shadow);
+      background:#fff;
+      display:flex; flex-direction:column; gap:10px;
+      position:relative;
+      overflow:hidden;
+    }
+    .bCard::after{
+      content:"";
+      position:absolute;
+      inset:-40% -40% auto auto;
+      width:240px; height:240px;
+      border-radius:999px;
+      background: radial-gradient(circle at 30% 30%, rgba(53,198,244,.20), transparent 60%);
+      transform: rotate(18deg);
+      pointer-events:none;
+    }
+    .bCard:nth-child(2)::after{background:radial-gradient(circle at 30% 30%, rgba(34,197,94,.18), transparent 60%)}
+    .bCard:nth-child(3)::after{background:radial-gradient(circle at 30% 30%, rgba(139,92,246,.18), transparent 60%)}
+
+    .bIc{
+      width:42px; height:42px;
+      border-radius: 14px;
+      border:1px solid rgba(0,0,0,.06);
+      background: linear-gradient(135deg, rgba(255,122,24,.12), rgba(53,198,244,.12));
+      display:grid; place-items:center;
+      position:relative;
+    }
+    .bCard:nth-child(2) .bIc{background:linear-gradient(135deg, rgba(34,197,94,.14), rgba(255,183,3,.12))}
+    .bCard:nth-child(3) .bIc{background:linear-gradient(135deg, rgba(139,92,246,.14), rgba(244,63,94,.12))}
+    .bIc svg{width:22px; height:22px; stroke:var(--primary); fill:none; stroke-width:2}
+
+    /* CTA banner */
+    .ctaBanner{
+      border-radius: var(--r-xl);
+      overflow:hidden;
+      box-shadow: var(--shadow2);
+      border:1px solid rgba(0,0,0,.06);
+      position:relative;
+      background:
+        radial-gradient(70% 120% at 25% 10%, rgba(255,255,255,.26), transparent 55%),
+        radial-gradient(70% 120% at 80% 65%, rgba(255,255,255,.18), transparent 60%),
+        linear-gradient(135deg, var(--primary), var(--kid-a), var(--kid-b));
+      padding: 44px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 24px;
+      align-items:center;
+    }
+    .ctaBanner h2{color:#fff}
+    .ctaBanner p{color: rgba(255,255,255,.92); font-weight:800}
+    .ctaDecor{position:absolute; inset:0; pointer-events:none; opacity:.9;}
+    .ctaRight{
+      display:flex;
+      justify-content:flex-end;
+      align-items:flex-end;
+      position:relative;
+      min-height: 260px;
+    }
+    .ctaPerson{
+      width:min(360px, 100%);
+      aspect-ratio: 4/4.6;
+      border-radius: 46px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.28);
+      box-shadow: 0 26px 90px rgba(0,0,0,.22);
+      background:
+        radial-gradient(80% 80% at 30% 20%, rgba(255,255,255,.18), transparent 60%),
+        var(--img-cta);
+      background-size: cover;
+      background-position: center;
+    }
+    .searchPill{
+      position:absolute;
+      left: 20px;
+      bottom: 34px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow: var(--shadow);
+      border-radius: 18px;
+      padding: 10px 12px;
+      width: 220px;
+      display:flex; align-items:center; gap:10px;
+    }
+    .searchPill .line{
+      height:10px; width:100%;
+      background: rgba(17,17,17,.10);
+      border-radius: 999px;
+    }
+    .searchPill svg{width:18px; height:18px; stroke:var(--primary); fill:none; stroke-width:2}
+    .ctaSeal{
+      position:absolute;
+      right: 24px;
+      top: 24px;
+      width:56px; height:56px;
+      border-radius: 999px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow: var(--shadow);
+      display:grid; place-items:center;
+    }
+    .ctaSeal svg{width:22px; height:22px; stroke:var(--primary); fill:none; stroke-width:2}
+
+    /* FAQ */
+    .faqGrid{
+      display:grid;
+      grid-template-columns: .95fr 1.05fr;
+      gap: 30px;
+      align-items:start;
+      margin-top: 22px;
+    }
+    .helpCard{
+      padding:18px;
+      border-radius: 18px;
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow: var(--shadow);
+      background:#fff;
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+    }
+    .qIc{
+      width:44px; height:44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(255,122,24,.10), rgba(53,198,244,.12));
+      border:1px solid rgba(0,0,0,.06);
+      display:grid; place-items:center;
+      flex: 0 0 auto;
+    }
+    .qIc svg{width:22px; height:22px; stroke:var(--primary); fill:none; stroke-width:2}
+    .helpCard b{font-weight:900}
+    .helpCard p{margin:6px 0 12px; color:var(--muted); font-weight:800; line-height:1.55}
+
+    .acc{display:flex; flex-direction:column; gap:12px;}
+    .accItem{
+      border-radius: 18px;
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow: var(--shadow);
+      background:#fff;
+      overflow:hidden;
+    }
+    .accBtn{
+      width:100%;
+      background:transparent;
+      border:none;
+      padding:16px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      cursor:pointer;
+      text-align:left;
+      gap:12px;
+    }
+    .accBtn span{
+      font-weight:900;
+      color:#111;
+      font-size:15px;
+      line-height:1.25;
+    }
+    .accBtn .plus{
+      width:36px; height:36px;
+      border-radius: 14px;
+      border:1px solid rgba(0,0,0,.06);
+      background: linear-gradient(135deg, rgba(255,122,24,.10), rgba(53,198,244,.12));
+      display:grid; place-items:center;
+      flex:0 0 auto;
+      transition: transform .18s ease;
+    }
+    .accBtn .plus svg{width:18px; height:18px; stroke:var(--primary); fill:none; stroke-width:2}
+    .accBody{
+      max-height:0;
+      overflow:hidden;
+      transition: max-height .25s ease;
+    }
+    .accBody .inner{
+      padding: 0 18px 16px;
+      color:var(--muted);
+      font-weight:800;
+      line-height:1.65;
+      font-size:14px;
+    }
+    .accItem.isOpen .accBody{max-height: 260px}
+    .accItem.isOpen .accBtn .plus{transform: rotate(45deg)}
+
+    /* DATA sections (planilha) */
+    .grid3{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+    .grid4{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+    .tile{
+      padding:16px;
+      border-radius: 18px;
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow: var(--shadow);
+      background:#fff;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      position:relative;
+      overflow:hidden;
+    }
+    .tile::after{
+      content:"";
+      position:absolute;
+      inset:auto -40% -60% auto;
+      width:260px; height:260px;
+      border-radius:999px;
+      background: radial-gradient(circle at 30% 30%, rgba(244,63,94,.14), transparent 60%);
+      pointer-events:none;
+    }
+    .tile:nth-child(2)::after{background:radial-gradient(circle at 30% 30%, rgba(53,198,244,.14), transparent 60%)}
+    .tile:nth-child(3)::after{background:radial-gradient(circle at 30% 30%, rgba(34,197,94,.14), transparent 60%)}
+    .tile:nth-child(4)::after{background:radial-gradient(circle at 30% 30%, rgba(139,92,246,.14), transparent 60%)}
+
+    .tile .top{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      position:relative;
+      z-index:1;
+    }
+    .tag{
+      font-size:12px;
+      font-weight:900;
+      color:#fff;
+      background: linear-gradient(135deg, var(--primary), var(--kid-a));
+      padding: 7px 10px;
+      border-radius: 999px;
+      letter-spacing:.04em;
+      position:relative;
+      z-index:1;
+    }
+    .tile:nth-child(2) .tag{background:linear-gradient(135deg, var(--kid-c), var(--kid-e))}
+    .tile:nth-child(3) .tag{background:linear-gradient(135deg, var(--kid-b), var(--kid-d))}
+    .tile:nth-child(4) .tag{background:linear-gradient(135deg, var(--primary2), var(--kid-a))}
+
+    .thumb{
+      border-radius: 16px;
+      overflow:hidden;
+      border:1px solid rgba(0,0,0,.06);
+      aspect-ratio: 16/11;
+      background: rgba(0,0,0,.04);
+      position:relative;
+      z-index:1;
+    }
+    .thumb img{width:100%; height:100%; object-fit:cover}
+    .tile h4{margin:0; font-size:16px; font-weight:900; position:relative; z-index:1}
+    .tile p{margin:0; color:var(--muted); font-weight:800; line-height:1.55; font-size:13.5px; position:relative; z-index:1}
+
+    /* MAP */
+    #map{
+      height: 420px;
+      border-radius: 22px;
+      overflow:hidden;
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow: var(--shadow2);
+      background:#f7f7f7;
+      margin-top: 18px;
+    }
+
+    /* FOOTER */
+    .footer{
+      background: #fff;
+      padding: 64px 0 0;
+      position:relative;
+      overflow:hidden;
+    }
+    .footerTopLine{
+      border-top:1px solid rgba(0,0,0,.08);
+      padding-top: 26px;
+    }
+    .footerHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      margin-bottom: 22px;
+    }
+    .social{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--muted);
+      font-weight:900;
+    }
+    .socBtns{display:flex; gap:10px; align-items:center;}
+    .soc{
+      width:44px; height:44px;
+      border-radius: 999px;
+      border:1px solid rgba(0,0,0,.08);
+      background:#fff;
+      box-shadow: 0 10px 24px rgba(0,0,0,.06);
+      display:grid; place-items:center;
+      transition: all .18s ease;
+    }
+    .soc:hover{transform: translateY(-1px); box-shadow: 0 14px 30px rgba(0,0,0,.08)}
+    .soc svg{width:18px; height:18px; stroke:var(--primary); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+
+    .footerGrid{
+      display:grid;
+      grid-template-columns: 1.1fr 1fr 1fr 1fr 1.2fr;
+      gap: 18px;
+      padding: 16px 0 18px;
+    }
+    .col h5{margin:0 0 10px; font-weight:900; font-size:14px; color:#222;}
+    .col a{
+      display:block;
+      padding:7px 0;
+      font-weight:900;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .col a:hover{color:#111; text-decoration:underline; text-underline-offset:6px}
+    .appBadges{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;}
+    .storeBadge{
+      height:46px;
+      border-radius: 12px;
+      border:1px solid rgba(0,0,0,.08);
+      background:#111;
+      display:flex;
+      align-items:center;
+      padding: 0 14px;
+      color:#fff;
+      font-weight:900;
+      font-size:12px;
+      gap:10px;
+      box-shadow: 0 16px 34px rgba(0,0,0,.14);
+      opacity:.95;
+    }
+    .storeBadge:hover{opacity:1}
+    .storeBadge svg{width:18px; height:18px; fill:#fff}
+    .footerBottom{
+      border-top:1px solid rgba(0,0,0,.08);
+      padding: 16px 0 18px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      color:var(--muted);
+      font-weight:900;
+      font-size:12px;
+    }
+    .backTop{font-weight:900; color:var(--muted);}
+    .backTop:hover{color:#111; text-decoration:underline; text-underline-offset:6px}
+
+    .wave{
+      position:absolute;
+      left:-10%;
+      bottom:-120px;
+      width: 120%;
+      height: 280px;
+      pointer-events:none;
+      opacity: 1;
+    }
+
+    /* Responsive */
+    @media (max-width: 980px){
+      .nav{display:none}
+      .hamb{display:grid; place-items:center}
+      .header__cta a.pill{display:none}
+
+      .hero__content{padding: 22px}
+      .hero__wrap{
+        border-radius: 28px;
+        /* ✅ altura mobile também respeita heroHDelta */
+        min-height: calc(var(--heroHBaseMobile) + (var(--heroHDelta) * var(--heroHStep)));
+      }
+
+      .statsGrid{grid-template-columns: 1fr 1fr}
+      .stat:nth-child(2)::after{display:none}
+      .twoCol{grid-template-columns: 1fr; gap: 26px}
+      .trustLeft{min-height: 360px}
+      .trustOrange{width: 86%}
+      .trustPhoto{width: 78%}
+
+      .benefGrid{grid-template-columns: 1fr}
+      .ctaBanner{grid-template-columns: 1fr; padding: 26px}
+      .ctaRight{justify-content:flex-start}
+      .faqGrid{grid-template-columns: 1fr}
+      .grid3{grid-template-columns: 1fr}
+      .grid4{grid-template-columns: 1fr 1fr}
+      .footerGrid{grid-template-columns: 1fr 1fr; row-gap: 22px}
+
+      .heroTuner{top:12px; right:12px}
+    }
+    @media (max-width: 560px){
+      :root{ --gutter: 18px; }
+      .heroCard{border-radius: 32px; padding: 22px}
+      .forPhoto{border-radius: 32px; min-height: 320px}
+      .ctaPerson{border-radius: 32px}
+      .statsGrid{grid-template-columns: 1fr}
+      .stat::after{display:none !important}
+      .grid4{grid-template-columns: 1fr}
+      #map{height: 360px}
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header" id="top">
+    <div class="container">
+      <div class="header__inner">
+        <a class="brand" href="#top" aria-label="DouradoKids - início">
+          <div class="brand__mark"><span>dk</span></div>
+          <div class="brand__name">
+            <b>DouradoKids</b>
+            <small>Funcional Kids + Brinquedos</small>
+          </div>
+        </a>
+
+        <nav class="nav" aria-label="Menu">
+          <a href="#sobre">Quem somos</a>
+          <a href="#programas">Programas</a>
+          <a href="#brinquedos">Brinquedos</a>
+          <a href="#locais">Locais</a>
+          <a href="#faq">Dúvidas</a>
+        </nav>
+
+        <div class="header__cta">
+          <a class="pill pill--ghost" href="#brinquedos" title="Ver brinquedos">Ver brinquedos</a>
+          <a class="pill pill--primary" id="ctaHeader" href="#" title="Chamar no WhatsApp">Reservar no WhatsApp</a>
+
+          <button class="hamb" id="hamb" aria-label="Abrir menu">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="mobileMenu" id="mobileMenu" aria-label="Menu mobile">
+        <div class="menuCtas" aria-label="Ações rápidas">
+          <a id="ctaMobileReserve" href="#">
+            Reservar no WhatsApp
+            <small>rápido &amp; simples</small>
+          </a>
+          <a href="#brinquedos">
+            Ver brinquedos
+            <small>catálogo</small>
+          </a>
+        </div>
+
+        <a href="#sobre">Quem somos</a>
+        <a href="#programas">Programas</a>
+        <a href="#brinquedos">Brinquedos</a>
+        <a href="#locais">Locais</a>
+        <a href="#faq">Dúvidas</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="hero">
+    <div class="container">
+      <div class="hero__wrap">
+        <div class="hero__bg" aria-hidden="true"></div>
+
+        <!-- ✅ Painel (opcional) -->
+        <div class="heroTuner" id="heroTuner" aria-label="Ajuste de imagem do hero">
+          <h4>
+            Ajuste do Hero
+            <button class="reset" id="heroTunerReset" type="button">Reset</button>
+          </h4>
+
+          <!-- ALTURA (corte) -->
+          <div class="row">
+            <div class="lbl">
+              Altura (corte)
+              <small>-10 corta mais • +10 corta menos</small>
+            </div>
+            <div class="ctrl">
+              <button type="button" id="heroHMinus">−</button>
+              <div class="val" id="heroHVal">0</div>
+              <button type="button" id="heroHPlus">+</button>
+            </div>
+          </div>
+
+          <!-- PAN X -->
+          <div class="row">
+            <div class="lbl">
+              Enquadramento X
+              <small>-10 vai p/ esquerda • +10 vai p/ direita</small>
+            </div>
+            <div class="ctrl">
+              <button type="button" id="heroPanXMinus">−</button>
+              <div class="val" id="heroPanXVal">0</div>
+              <button type="button" id="heroPanXPlus">+</button>
+            </div>
+          </div>
+
+          <!-- PAN Y -->
+          <div class="row">
+            <div class="lbl">
+              Enquadramento Y
+              <small>-10 sobe • +10 desce</small>
+            </div>
+            <div class="ctrl">
+              <button type="button" id="heroPanYMinus">−</button>
+              <div class="val" id="heroPanYVal">0</div>
+              <button type="button" id="heroPanYPlus">+</button>
+            </div>
+          </div>
+
+          <!-- ZOOM (opcional) -->
+          <div class="row">
+            <div class="lbl">
+              Zoom (opcional)
+              <small>-10 afasta • +10 aproxima</small>
+            </div>
+            <div class="ctrl">
+              <button type="button" id="heroZoomMinus">−</button>
+              <div class="val" id="heroZoomVal">0</div>
+              <button type="button" id="heroZoomPlus">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero__content">
+          <div class="heroCard">
+            <div class="kicker">
+              <span class="dot"></span>
+              <span>BEM-VINDO(A) À DOURADOKIDS</span>
+            </div>
+
+            <h1 class="h1">
+              Movimento, alegria e <span style="color:var(--primary)">brincar de verdade</span> — tudo em um só lugar.
+            </h1>
+
+            <p class="lead">
+              Programa de <b>Funcional Kids</b> para crianças e <b>locação de brinquedos</b> para momentos especiais.
+              Reserve pelo WhatsApp com praticidade.
+            </p>
+
+            <div class="heroMiniBadges" aria-label="Números do mês">
+              <span class="badgeMini"><span class="dot"></span>2 brinquedos no catálogo</span>
+              <span class="badgeMini"><span class="dot"></span>5 locais atendidos</span>
+              <span class="badgeMini"><span class="dot"></span>500 sorrisos/mês</span>
+            </div>
+
+            <div class="heroActions" style="margin-top:18px">
+              <a class="pill pill--primary" id="ctaHero" href="#">Reservar agora</a>
+              <a class="heroLink" href="#programas">
+                Conheça mais
+                <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M7 14l5 5 5-5"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="stats" aria-label="Estatísticas">
+        <div class="stats__bar">
+          <div class="statsGrid" id="statsGrid"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- SOBRE -->
+  <section class="section" id="sobre">
+    <div class="container">
+      <div class="twoCol">
+        <div class="trustLeft" aria-hidden="false">
+          <div class="trustOrange"></div>
+          <div class="trustPhoto" aria-label="Foto ilustrativa - espaço kids"></div>
+          <div class="stamp" aria-label="Selo DouradoKids">
+            <div class="inner">dk</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="kicker"><span class="dot"></span><span>O QUE É A DOURADOKIDS</span></div>
+          <h2 class="h2">
+            Uma experiência que <span style="color:var(--primary)">une movimento</span>, socialização e brincadeira.
+          </h2>
+          <p class="lead" style="margin-top:14px">
+            Com o Funcional Kids, as crianças se desenvolvem com atividades lúdicas e seguras.
+            Com a locação de brinquedos, você monta um ambiente divertido sem comprar tudo — do jeito que seu evento merece.
+          </p>
+
+          <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap">
+            <a class="pill pill--primary" id="ctaSobre" href="#">Chamar no WhatsApp</a>
+            <a class="pill pill--ghost" href="#galeria">Ver fotos</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEPOIMENTOS -->
+  <section class="section" id="depoimentos">
+    <div class="container">
+      <div class="tHead">
+        <div>
+          <div class="kicker"><span class="dot"></span><span>SATISFAÇÃO DAS FAMÍLIAS</span></div>
+          <h2 class="h2">Milhares de <span style="color:var(--primary)">momentos felizes</span></h2>
+        </div>
+
+        <div class="tNav" aria-label="Navegação do carrossel">
+          <button class="navBtn" id="tPrev" aria-label="Anterior">
+            <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <button class="navBtn" id="tNext" aria-label="Próximo">
+            <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="carousel">
+        <div class="track" id="tTrack" aria-label="Depoimentos"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROGRAMAS -->
+  <section class="section" id="programas">
+    <div class="container">
+      <div class="twoCol">
+        <div>
+          <div class="kicker"><span class="dot"></span><span>PARA QUEM É</span></div>
+          <h2 class="h2">
+            Para famílias que querem <span style="color:var(--primary)">energia boa</span> e praticidade.
+          </h2>
+          <p class="lead" style="margin-top:14px">
+            Seja para rotina semanal (Funcional Kids) ou para um evento especial (locação),
+            você escolhe o que faz sentido e reserva pelo WhatsApp.
+          </p>
+
+          <div class="list" aria-label="Lista de vantagens">
+            <div class="li">
+              <div class="liIc">
+                <svg viewBox="0 0 24 24"><path d="M4 12h16"/><path d="M7 12l3 3 7-7"/></svg>
+              </div>
+              <div>Funcional Kids com atividades lúdicas</div>
+            </div>
+            <div class="li">
+              <div class="liIc">
+                <svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M5 8h14"/></svg>
+              </div>
+              <div>Brinquedos para locação (catálogo atualizado)</div>
+            </div>
+            <div class="li">
+              <div class="liIc">
+                <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0"/><path d="M12 7v5l3 2"/></svg>
+              </div>
+              <div>Reserva rápida no WhatsApp</div>
+            </div>
+          </div>
+
+          <div style="margin-top:18px; display:flex; gap:12px; flex-wrap:wrap">
+            <a class="pill pill--primary" id="ctaProgramas" href="#">Quero reservar</a>
+            <a class="pill pill--ghost" href="#brinquedos">Ver brinquedos</a>
+          </div>
+        </div>
+
+        <div style="position:relative">
+          <div class="forPhoto" aria-label="Foto ilustrativa - família e criança"></div>
+          <div class="stamp stamp--mid" aria-hidden="true">
+            <div class="inner">dk</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESSO -->
+  <section class="section section--alt" id="processo">
+    <div class="container">
+      <div class="center">
+        <div class="kicker" style="justify-content:center"><span class="dot"></span><span>COMECE AGORA</span></div>
+        <h2 class="h2">Como funciona o processo com a DouradoKids?</h2>
+        <p class="lead" style="margin-top:12px">
+          Dois caminhos simples: entrar no Funcional Kids ou reservar brinquedos para locação.
+        </p>
+      </div>
+
+      <div class="processRow" aria-label="Etapas">
+        <div class="stepCard hoverlift">
+          <span class="stepPill">PASSO 01</span>
+          <div class="h3">Escolha o que precisa</div>
+          <p class="muted" style="margin:0; font-weight:800; line-height:1.55">
+            Funcional Kids (turmas/horários) ou locação de brinquedos (evento/data).
+          </p>
+        </div>
+
+        <div class="op" aria-hidden="true">+</div>
+
+        <div class="stepCard hoverlift">
+          <span class="stepPill">PASSO 02</span>
+          <div class="h3">Chame no WhatsApp</div>
+          <p class="muted" style="margin:0; font-weight:800; line-height:1.55">
+            Conte a cidade, data, idade da criança e o que deseja reservar.
+          </p>
+        </div>
+
+        <div class="op" aria-hidden="true">+</div>
+
+        <div class="stepCard hoverlift">
+          <span class="stepPill">PASSO 03</span>
+          <div class="h3">Confirme a disponibilidade</div>
+          <p class="muted" style="margin:0; font-weight:800; line-height:1.55">
+            A gente confirma vaga/turma ou brinquedos disponíveis e combina detalhes.
+          </p>
+        </div>
+
+        <div class="op" aria-hidden="true">=</div>
+
+        <div class="stepCard finalCard hoverlift">
+          <svg viewBox="0 0 24 24"><path d="M7 12l3 3 7-7"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+          <div class="h3">Diversão garantida</div>
+          <p class="muted" style="margin:0; font-weight:800; line-height:1.55">
+            Tudo alinhado, sem burocracia.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MANIFESTO -->
+  <section class="section" id="manifesto">
+    <div class="container">
+      <div class="twoCol">
+        <div>
+          <div class="kicker"><span class="dot"></span><span>PEQUENAS ROTINAS, GRANDES MEMÓRIAS</span></div>
+          <h2 class="h2">DouradoKids deixa o brincar mais leve — para crianças e para os pais.</h2>
+          <p class="quote">
+            “Movimento e brincadeira são combustível para o desenvolvimento. Nosso objetivo é criar experiências
+            seguras, felizes e fáceis de reservar — do jeito que a vida real precisa.”
+          </p>
+
+          <div style="margin-top:18px">
+            <a class="pill pill--primary" id="ctaManifesto" href="#">Quero falar com vocês</a>
+          </div>
+        </div>
+
+        <div class="rightPhoto" aria-label="Foto ilustrativa - equipe e ambiente"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFÍCIOS -->
+  <section class="section" id="beneficios">
+    <div class="container">
+      <div class="center">
+        <div class="kicker" style="justify-content:center"><span class="dot"></span><span>BENEFÍCIOS DOURADOKIDS</span></div>
+        <h2 class="h2">Mais praticidade. Mais energia. Mais sorrisos.</h2>
+        <p class="lead" style="margin-top:12px">
+          Entenda as principais vantagens de participar do Funcional Kids e usar a locação de brinquedos.
+        </p>
+
+        <div style="margin-top:18px">
+          <a class="pill pill--primary" id="ctaBenef" href="#">Quero reservar no WhatsApp</a>
+        </div>
+      </div>
+
+      <div class="benefGrid" aria-label="Benefícios">
+        <div class="bCard hoverlift">
+          <div class="bIc">
+            <svg viewBox="0 0 24 24"><path d="M12 3l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/></svg>
+          </div>
+          <div class="h3">Atividades lúdicas e seguras</div>
+          <p class="muted" style="margin:0; font-weight:800; line-height:1.55">
+            Movimento com orientação e brincadeiras que engajam, respeitando a fase da criança.
+          </p>
+        </div>
+
+        <div class="bCard hoverlift">
+          <div class="bIc">
+            <svg viewBox="0 0 24 24"><path d="M3 12h18"/><path d="M7 12l-2 9h14l-2-9"/><path d="M9 7h6l1 5H8z"/></svg>
+          </div>
+          <div class="h3">Locação sem dor de cabeça</div>
+          <p class="muted" style="margin:0; font-weight:800; line-height:1.55">
+            Monte um espaço incrível por um período e devolva — sem precisar comprar tudo.
+          </p>
+        </div>
+
+        <div class="bCard hoverlift">
+          <div class="bIc">
+            <svg viewBox="0 0 24 24"><path d="M7 7h10"/><path d="M7 12h10"/><path d="M7 17h10"/><path d="M4 5v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2z"/></svg>
+          </div>
+          <div class="h3"><span style="opacity:.65">- </span>Catálogo sempre atualizado</div>
+          <p class="muted" style="margin:0; font-weight:800; line-height:1.55">
+            Brinquedos, fotos, turmas e parceiros podem ser atualizados via Google Planilhas.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALERIA -->
+  <section class="section" id="galeria">
+    <div class="container">
+      <div class="twoCol" style="align-items:flex-end">
+        <div>
+          <div class="kicker"><span class="dot"></span><span>FOTOS</span></div>
+          <h2 class="h2">Momentos reais do Funcional Kids e das locações</h2>
+          <p class="lead" style="margin-top:12px">
+            Troque as imagens apenas alterando os links na planilha (alta qualidade).
+          </p>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; flex-wrap:wrap">
+          <a class="pill pill--ghost" href="#brinquedos">Ver brinquedos</a>
+          <a class="pill pill--primary" id="ctaGaleria" href="#">Reservar no WhatsApp</a>
+        </div>
+      </div>
+
+      <div class="grid4" id="galleryGrid" aria-label="Galeria de fotos"></div>
+    </div>
+  </section>
+
+  <!-- BRINQUEDOS -->
+  <section class="section section--alt" id="brinquedos">
+    <div class="container">
+      <div class="twoCol" style="align-items:flex-end">
+        <div>
+          <div class="kicker"><span class="dot"></span><span>BRINQUEDOS PARA LOCAÇÃO</span></div>
+          <h2 class="h2">Escolha os brinquedos e monte o combo perfeito</h2>
+          <p class="lead" style="margin-top:12px">
+            Itens, descrições e fotos são carregados da planilha. Você pode adicionar quantos quiser.
+          </p>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; flex-wrap:wrap">
+          <a class="pill pill--primary" id="ctaToys" href="#">Quero reservar brinquedos</a>
+          <a class="pill pill--outline" href="#locais">Ver locais</a>
+        </div>
+      </div>
+
+      <div class="grid3" id="toysGrid" aria-label="Catálogo de brinquedos"></div>
+    </div>
+  </section>
+
+  <!-- MAPA -->
+  <section class="section" id="locais">
+    <div class="container">
+      <div class="twoCol" style="align-items:flex-end">
+        <div>
+          <div class="kicker"><span class="dot"></span><span>ONDE ESTAMOS</span></div>
+          <h2 class="h2">Locais que já possuem o Funcional Kids</h2>
+          <p class="lead" style="margin-top:12px">
+            Você cadastra cidade + coordenadas na planilha, e os pins aparecem automaticamente no mapa.
+          </p>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; flex-wrap:wrap">
+          <a class="pill pill--primary" id="ctaMap" href="#">Quero saber do meu bairro</a>
+          <a class="pill pill--ghost" href="#parceiros">Ver parceiros</a>
+        </div>
+      </div>
+
+      <div id="map" role="region" aria-label="Mapa de locais"></div>
+      <p class="muted" style="margin:12px 0 0; font-weight:900; font-size:13px">
+        Dica: para pins perfeitos, preencha na planilha as colunas <b>lat</b> e <b>lng</b>.
+      </p>
+    </div>
+  </section>
+
+  <!-- PARCEIROS -->
+  <section class="section section--alt" id="parceiros">
+    <div class="container">
+      <div class="twoCol" style="align-items:flex-end">
+        <div>
+          <div class="kicker"><span class="dot"></span><span>PROFISSIONAIS PARCEIROS</span></div>
+          <h2 class="h2">Uma rede que fortalece a experiência das crianças</h2>
+          <p class="lead" style="margin-top:12px">
+            Adicione profissionais e funções na planilha: foto, nome, função e descrição.
+          </p>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; flex-wrap:wrap">
+          <a class="pill pill--primary" id="ctaPartners" href="#">Quero entrar em contato</a>
+          <a class="pill pill--ghost" href="#faq">Tirar dúvidas</a>
+        </div>
+      </div>
+
+      <div class="grid4" id="partnersGrid" aria-label="Lista de parceiros"></div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section" id="cta">
+    <div class="container">
+      <div class="ctaBanner">
+        <svg class="ctaDecor" viewBox="0 0 1200 420" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M880,0 C1040,80 1120,140 1200,240 L1200,0 Z" fill="rgba(255,255,255,.14)"/>
+          <path d="M0,260 C140,220 280,220 420,260 C640,320 720,420 980,420 L0,420 Z" fill="rgba(255,255,255,.10)"/>
+          <circle cx="210" cy="120" r="90" fill="rgba(255,255,255,.12)"/>
+          <circle cx="1000" cy="300" r="110" fill="rgba(255,255,255,.08)"/>
+        </svg>
+
+        <div>
+          <h2 class="h2">Deixe a diversão com especialistas e foque no que importa: <span style="color:#fff">ver seu filho feliz</span>.</h2>
+          <p class="lead" style="margin-top:12px">
+            Fale com a DouradoKids e reserve Funcional Kids ou brinquedos para o seu próximo momento especial.
+          </p>
+
+          <div style="margin-top:18px; display:flex; gap:12px; flex-wrap:wrap">
+            <a class="pill pill--ghost" style="background:#fff; border-color:transparent; color:var(--primary)" id="ctaBannerBtn" href="#">
+              Preciso reservar agora
+            </a>
+            <a class="pill pill--outline" style="border-color:rgba(255,255,255,.65); color:#fff; background:transparent" href="#brinquedos">
+              Ver catálogo
+            </a>
+          </div>
+        </div>
+
+        <div class="ctaRight">
+          <div class="ctaSeal" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/></svg>
+          </div>
+
+          <div class="searchPill" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M21 21l-4.3-4.3"/><path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z"/></svg>
+            <div class="line"></div>
+          </div>
+
+          <div class="ctaPerson" aria-label="Foto ilustrativa - criança brincando"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section section--alt" id="faq">
+    <div class="container">
+      <div class="twoCol" style="align-items:flex-end">
+        <div>
+          <div class="kicker"><span class="dot"></span><span>CENTRAL DE AJUDA</span></div>
+          <h2 class="h2">Ficou com alguma dúvida?</h2>
+          <p class="lead" style="margin-top:12px">
+            Aqui estão as perguntas mais comuns. Se preferir, fale direto no WhatsApp.
+          </p>
+
+          <div class="helpCard" style="margin-top:18px">
+            <div class="qIc" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 18h.01"/><path d="M9.5 9a2.5 2.5 0 1 1 4.2 1.8c-.7.6-1.2 1-1.2 2.2"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0"/></svg>
+            </div>
+            <div>
+              <b>Não encontrou o que gostaria?</b>
+              <p>Fale com nosso time no WhatsApp e a gente te orienta rapidamente.</p>
+              <a class="pill pill--outline" id="ctaFaq" href="#">Quero tirar outra dúvida!</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc" aria-label="Perguntas frequentes">
+          <div class="accItem isOpen">
+            <button class="accBtn" type="button">
+              <span>Como faço a reserva do Funcional Kids?</span>
+              <div class="plus" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              </div>
+            </button>
+            <div class="accBody">
+              <div class="inner">
+                Você chama no WhatsApp, informa cidade, idade da criança e o melhor horário. A gente te passa turmas, valores e como confirmar.
+              </div>
+            </div>
+          </div>
+
+          <div class="accItem">
+            <button class="accBtn" type="button">
+              <span>Como funciona a locação de brinquedos?</span>
+              <div class="plus" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              </div>
+            </button>
+            <div class="accBody">
+              <div class="inner">
+                Você escolhe os brinquedos no catálogo e reserva a data. Confirmamos disponibilidade e combinamos entrega/retirada conforme sua cidade.
+              </div>
+            </div>
+          </div>
+
+          <div class="accItem">
+            <button class="accBtn" type="button">
+              <span>Posso montar um combo com vários brinquedos?</span>
+              <div class="plus" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              </div>
+            </button>
+            <div class="accBody">
+              <div class="inner">
+                Sim! É só dizer a idade, o tipo de evento e o espaço disponível. A gente sugere combinações que ficam lindas e divertidas.
+              </div>
+            </div>
+          </div>
+
+          <div class="accItem">
+            <button class="accBtn" type="button">
+              <span>Vocês atendem quais cidades?</span>
+              <div class="plus" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              </div>
+            </button>
+            <div class="accBody">
+              <div class="inner">
+                Os locais com Funcional Kids aparecem no mapa desta página. Para locação, consulte a disponibilidade e logística via WhatsApp.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footerTopLine">
+      <div class="footerHead">
+        <a class="brand" href="#top" aria-label="DouradoKids - voltar ao topo">
+          <div class="brand__mark"><span>dk</span></div>
+          <div class="brand__name">
+            <b>DouradoKids</b>
+            <small>Funcional Kids + Brinquedos</small>
+          </div>
+        </a>
+
+        <div class="social">
+          <span>Siga nossas redes</span>
+          <div class="socBtns" aria-label="Redes sociais">
+            <a class="soc" href="#" aria-label="Instagram">
+              <svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="3"/><path d="M16.5 7.5h.01"/><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+            </a>
+            <a class="soc" href="#" aria-label="YouTube">
+              <svg viewBox="0 0 24 24"><path d="M10 15l5-3-5-3z"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+            </a>
+            <a class="soc" href="#" aria-label="Facebook">
+              <svg viewBox="0 0 24 24"><path d="M14 9h3V6h-3a4 4 0 0 0-4 4v3H7v3h3v5h3v-5h3l1-3h-4v-3a1 1 0 0 1 1-1z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footerGrid" aria-label="Links do rodapé">
+        <div class="col">
+          <h5>Empresa</h5>
+          <a href="#sobre">Quem somos</a>
+          <a href="#manifesto">Nossa missão</a>
+          <a href="#parceiros">Parceiros</a>
+        </div>
+
+        <div class="col">
+          <h5>Começar</h5>
+          <a href="#processo">Como reservar</a>
+          <a href="#programas">Funcional Kids</a>
+          <a href="#brinquedos">Locação</a>
+        </div>
+
+        <div class="col">
+          <h5>Navegue</h5>
+          <a href="#galeria">Fotos</a>
+          <a href="#depoimentos">Depoimentos</a>
+          <a href="#locais">Locais</a>
+        </div>
+
+        <div class="col">
+          <h5>Suporte</h5>
+          <a href="#faq">Dúvidas (FAQ)</a>
+          <a href="#" id="ctaFooter">Falar no WhatsApp</a>
+        </div>
+
+        <div class="col">
+          <h5>Baixe o app (opcional)</h5>
+          <div class="muted" style="font-weight:900; font-size:13px; line-height:1.5">
+            Se você não tiver app, pode esconder este bloco — deixei no estilo da referência.
+          </div>
+          <div class="appBadges" aria-label="App badges">
+            <a class="storeBadge" href="#" aria-label="Google Play (placeholder)">
+              <svg viewBox="0 0 24 24"><path d="M3 2l13 10L3 22V2z"/></svg>
+              Google Play
+            </a>
+            <a class="storeBadge" href="#" aria-label="App Store (placeholder)">
+              <svg viewBox="0 0 24 24"><path d="M16 13c.6 3 3 3.4 3 3.4S18.6 21 15 21s-3.5-2-6-2-2.4 2-6 2S5 16.4 5 16.4 7.4 16 8 13c.6-3-2-5-2-7s2-3 4-3c1.7 0 2.6 1 4 1s2.3-1 4-1c2 0 4 1 4 3s-2.6 4-2 7z"/></svg>
+              App Store
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footerBottom">
+        <div>© <span id="year"></span> DouradoKids. Todos os direitos reservados.</div>
+        <a class="backTop" href="#top">Voltar ao topo ↑</a>
+      </div>
+    </div>
+
+    <svg class="wave" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
+      <path fill="#FF7A18" fill-opacity="1"
+        d="M0,256L48,240C96,224,192,192,288,176C384,160,480,160,576,176C672,192,768,224,864,218.7C960,213,1056,171,1152,154.7C1248,139,1344,149,1392,154.7L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+      </path>
+    </svg>
+  </footer>
+
+  <script>
+  /* =========================================================
+     ✅ CONFIG — WHATSAPP + PLANILHAS (GVIZ por ID + GID)
+  ========================================================= */
+  const WHATSAPP_NUMBER = "557582773240";
+  const WHATSAPP_DEFAULT_MSG = "Olá! Quero reservar com a DouradoKids. Pode me passar as opções e disponibilidade?";
+
+  // ✅ ID da planilha (da URL /d/SEU_ID/edit)
+  const SHEET_ID = "1A6M1kbFEbAe8qH2_J-H3KnWldD1UxSE2Zj1sNpCMQ0I";
+
+  // ✅ GIDs que você mandou
+  const SHEET_GIDS = {
+    stats: 810572808,
+    testimonials: 938786539,
+    gallery: 342442507,
+    toys: 475706918,
+    locations: 147269100,
+    partners: 794999610
+  };
+
+  /* Caso você queira “forçar” um CSV direto (override), coloque a URL aqui.
+     Se ficar vazio, ele usa GVIZ (ID + GID). */
+  const sheetCsvOverride = {
+    stats: "",
+    testimonials: "",
+    gallery: "",
+    toys: "",
+    locations: "",
+    partners: ""
+  };
+
+  function buildCsvUrlFromId(gid){
+    // ✅ GVIZ -> CSV (mais robusto que "Publicado na web")
+    return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(SHEET_ID)}/gviz/tq?gid=${encodeURIComponent(String(gid))}&tqx=out:csv`;
+  }
+
+  const sheetCsv = {
+    stats: sheetCsvOverride.stats || buildCsvUrlFromId(SHEET_GIDS.stats),
+    testimonials: sheetCsvOverride.testimonials || buildCsvUrlFromId(SHEET_GIDS.testimonials),
+    gallery: sheetCsvOverride.gallery || buildCsvUrlFromId(SHEET_GIDS.gallery),
+    toys: sheetCsvOverride.toys || buildCsvUrlFromId(SHEET_GIDS.toys),
+    locations: sheetCsvOverride.locations || buildCsvUrlFromId(SHEET_GIDS.locations),
+    partners: sheetCsvOverride.partners || buildCsvUrlFromId(SHEET_GIDS.partners),
+  };
+
+  /* =========================================================
+     ✅ HERO TUNER (ALTURA + PAN X/Y + ZOOM)
+     - por padrão DESLIGADO
+  ========================================================= */
+  const HERO_TUNER_ENABLED = false;
+
+  const HERO_TUNER_CLAMP = {
+    hMin: -30, hMax: 30,
+    panMin: -30, panMax: 30,
+    zoomMin: -20, zoomMax: 20
+  };
+
+  function getRootVarInt(name, fallback=0){
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : fallback;
+  }
+  function setRootVarInt(name, value){
+    document.documentElement.style.setProperty(name, String(value));
+  }
+  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+  function initHeroTuner(){
+    const panel = document.getElementById("heroTuner");
+    if(!panel) return;
+
+    if(!HERO_TUNER_ENABLED){
+      panel.style.display = "none";
+      return;
+    }
+    panel.style.display = "block";
+
+    const hVal    = document.getElementById("heroHVal");
+    const panXVal = document.getElementById("heroPanXVal");
+    const panYVal = document.getElementById("heroPanYVal");
+    const zoomVal = document.getElementById("heroZoomVal");
+
+    const btnHm = document.getElementById("heroHMinus");
+    const btnHp = document.getElementById("heroHPlus");
+
+    const btnPxm = document.getElementById("heroPanXMinus");
+    const btnPxp = document.getElementById("heroPanXPlus");
+
+    const btnPym = document.getElementById("heroPanYMinus");
+    const btnPyp = document.getElementById("heroPanYPlus");
+
+    const btnZm = document.getElementById("heroZoomMinus");
+    const btnZp = document.getElementById("heroZoomPlus");
+
+    const btnR  = document.getElementById("heroTunerReset");
+
+    function sync(){
+      const h  = getRootVarInt("--heroHDelta", 0);
+      const px = getRootVarInt("--heroPanX", 0);
+      const py = getRootVarInt("--heroPanY", 0);
+      const z  = getRootVarInt("--heroZoom", 0);
+      if(hVal)    hVal.textContent = String(h);
+      if(panXVal) panXVal.textContent = String(px);
+      if(panYVal) panYVal.textContent = String(py);
+      if(zoomVal) zoomVal.textContent = String(z);
+    }
+
+    function incH(delta){
+      let h = getRootVarInt("--heroHDelta", 0);
+      h = clamp(h + delta, HERO_TUNER_CLAMP.hMin, HERO_TUNER_CLAMP.hMax);
+      setRootVarInt("--heroHDelta", h);
+      sync();
+    }
+    function incPanX(delta){
+      let px = getRootVarInt("--heroPanX", 0);
+      px = clamp(px + delta, HERO_TUNER_CLAMP.panMin, HERO_TUNER_CLAMP.panMax);
+      setRootVarInt("--heroPanX", px);
+      sync();
+    }
+    function incPanY(delta){
+      let py = getRootVarInt("--heroPanY", 0);
+      py = clamp(py + delta, HERO_TUNER_CLAMP.panMin, HERO_TUNER_CLAMP.panMax);
+      setRootVarInt("--heroPanY", py);
+      sync();
+    }
+    function incZoom(delta){
+      let z = getRootVarInt("--heroZoom", 0);
+      z = clamp(z + delta, HERO_TUNER_CLAMP.zoomMin, HERO_TUNER_CLAMP.zoomMax);
+      setRootVarInt("--heroZoom", z);
+      sync();
+    }
+
+    btnHm && btnHm.addEventListener("click", ()=>incH(-1));
+    btnHp && btnHp.addEventListener("click", ()=>incH(+1));
+
+    btnPxm && btnPxm.addEventListener("click", ()=>incPanX(-1));
+    btnPxp && btnPxp.addEventListener("click", ()=>incPanX(+1));
+
+    btnPym && btnPym.addEventListener("click", ()=>incPanY(-1));
+    btnPyp && btnPyp.addEventListener("click", ()=>incPanY(+1));
+
+    btnZm && btnZm.addEventListener("click", ()=>incZoom(-1));
+    btnZp && btnZp.addEventListener("click", ()=>incZoom(+1));
+
+    btnR  && btnR.addEventListener("click", ()=>{
+      setRootVarInt("--heroHDelta", 0);
+      setRootVarInt("--heroPanX", 0);
+      setRootVarInt("--heroPanY", 0);
+      setRootVarInt("--heroZoom", 0);
+      sync();
+    });
+
+    sync();
+  }
+
+  /* =========================================================
+     HELPERS
+  ========================================================= */
+  function waLink(customMsg){
+    const msg = encodeURIComponent(customMsg || WHATSAPP_DEFAULT_MSG);
+    return `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
+  }
+
+  function setWhatsAppCtas(){
+    const links = [
+      "ctaHeader","ctaHero","ctaSobre","ctaProgramas","ctaManifesto",
+      "ctaBenef","ctaGaleria","ctaToys","ctaMap","ctaPartners",
+      "ctaBannerBtn","ctaFaq","ctaFooter","ctaMobileReserve"
+    ];
+    links.forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.href = waLink();
+    });
+  }
+
+  async function fetchText(url){
+    const r = await fetch(url, { cache:"no-store" });
+    if(!r.ok) throw new Error(`Falha ao carregar CSV (${r.status})`);
+    return await r.text();
+  }
+
+  function parseCSV(text){
+    const rows = [];
+    let row = [];
+    let cur = "";
+    let inQuotes = false;
+
+    for(let i=0;i<text.length;i++){
+      const c = text[i];
+      const n = text[i+1];
+
+      if(c === '"' && inQuotes && n === '"'){ cur += '"'; i++; continue; }
+      if(c === '"'){ inQuotes = !inQuotes; continue; }
+
+      if(c === ',' && !inQuotes){ row.push(cur.trim()); cur=""; continue; }
+      if((c === '\n' || c === '\r') && !inQuotes){
+        if(cur.length || row.length){
+          row.push(cur.trim()); cur="";
+          rows.push(row);
+          row = [];
+        }
+        continue;
+      }
+      cur += c;
+    }
+    if(cur.length || row.length){ row.push(cur.trim()); rows.push(row); }
+
+    if(!rows.length) return [];
+    const headers = rows[0].map(h=>h.replace(/^\uFEFF/, "").trim());
+    return rows.slice(1)
+      .filter(r=>r.some(x=>String(x||"").trim().length))
+      .map(r=>{
+        const obj = {};
+        headers.forEach((h, idx)=> obj[h] = (r[idx] ?? "").trim());
+        return obj;
+      });
+  }
+
+  const sheetLoadErrors = {};
+
+  function withBust(url){
+    const u = new URL(url);
+    u.searchParams.set("_ts", String(Date.now()));
+    return u.toString();
+  }
+
+  // ✅ sem backups: se falhar, retorna []
+  async function loadSheet(key){
+    const url = sheetCsv[key];
+    try{
+      const csv = await fetchText(withBust(url));
+      const data = parseCSV(csv);
+
+      // Se veio HTML (ex.: login), costuma ter "<!doctype" etc.
+      // Isso evita “parsear lixo” e te dá um erro claro.
+      const raw = (csv || "").trim().toLowerCase();
+      if(raw.startsWith("<!doctype") || raw.startsWith("<html")){
+        throw new Error("Resposta HTML (provável falta de permissão pública no Google Sheets).");
+      }
+      return Array.isArray(data) ? data : [];
+    }catch(e){
+      console.warn(`[SHEETS] Falhou em "${key}" ->`, url, e);
+      sheetLoadErrors[key] = { url, error: String(e?.message || e) };
+      return [];
+    }
+  }
+
+  function iconSvg(name){
+    const common = 'viewBox="0 0 24 24"';
+    switch(name){
+      case "target":
+        return `<svg ${common}><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg>`;
+      case "spark":
+        return `<svg ${common}><path d="M12 2l2.5 6 6 2.5-6 2.5-2.5 6-2.5-6-6-2.5 6-2.5z"/></svg>`;
+      case "map":
+        return `<svg ${common}><path d="M12 21s7-5.3 7-11a7 7 0 1 0-14 0c0 5.7 7 11 7 11z"/><path d="M12 10.5a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6z"/></svg>`;
+      case "toy":
+        return `<svg ${common}><path d="M7 9h10"/><path d="M8 9V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M6 11h12v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8z"/><path d="M9 14h.01"/><path d="M15 14h.01"/></svg>`;
+      default:
+        return `<svg ${common}><path d="M12 3v18"/><path d="M5 12h14"/></svg>`;
+    }
+  }
+
+  function starSvg(){
+    return `<svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3.1 6.4 7.1 1-5.1 5 1.2 7-6.3-3.4-6.3 3.4 1.2-7-5.1-5 7.1-1z"/></svg>`;
+  }
+
+  function gMini(){
+    return `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <path fill="#EA4335" d="M12 11v3.9h5.4c-.2 1.3-1.5 3.8-5.4 3.8-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3 .8 3.7 1.5l2.5-2.4C16.7 4.1 14.6 3 12 3 7 3 3 7 3 12s4 9 9 9c5.2 0 8.6-3.6 8.6-8.7 0-.6-.1-1-.1-1.4H12z"/>
+    </svg>`;
+  }
+
+  function renderStats(items){
+    const el = document.getElementById("statsGrid");
+    if(!el) return;
+    if(!items || !items.length){ el.innerHTML = ""; return; }
+
+    const baseIcons = ["spark","map","toy","target"];
+    el.innerHTML = items.slice(0,4).map((s,i)=>{
+      const icon = iconSvg((s.icon||baseIcons[i]||"target").toLowerCase());
+      const title = s.title || "";
+      const subtitle = s.subtitle || "";
+      return `
+        <div class="stat">
+          <div class="ico">${icon}</div>
+          <b>${escapeHtml(title)}</b>
+          <span>${escapeHtml(subtitle)}</span>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderTestimonials(items){
+    const track = document.getElementById("tTrack");
+    if(!track) return;
+    if(!items || !items.length){ track.innerHTML = ""; return; }
+
+    const normalized = items.map(t => ({
+      name: t.name || t.nome || "Cliente",
+      when: t.when || t.quando || "recentemente",
+      rating: Number(t.rating || t.nota || 5) || 5,
+      text: t.text || t.depoimento || "",
+      avatarUrl: t.avatarUrl || t.foto || "",
+    }));
+
+    track.innerHTML = normalized.map(t=>{
+      const stars = Array.from({length: Math.min(5, Math.max(1, t.rating))}).map(starSvg).join("");
+      const avatar = t.avatarUrl ? `<img src="${escapeAttr(t.avatarUrl)}" alt="Avatar de ${escapeAttr(t.name)}">` : "";
+      return `
+        <article class="tCard">
+          <div class="tTop">
+            <div class="tUser">
+              <div class="avatar">${avatar}</div>
+              <div>
+                <div class="tName">${escapeHtml(t.name)}</div>
+                <div class="tWhen">${escapeHtml(t.when)}</div>
+              </div>
+            </div>
+            <div class="gIcon" aria-label="Fonte do depoimento">${gMini()}</div>
+          </div>
+
+          <div class="stars" aria-label="Avaliação">
+            ${stars}
+            <span class="verified" aria-label="Verificado">
+              <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+            </span>
+          </div>
+
+          <p class="tText">${escapeHtml(t.text)}</p>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderGallery(items){
+    const grid = document.getElementById("galleryGrid");
+    if(!grid) return;
+    if(!items || !items.length){ grid.innerHTML = ""; return; }
+
+    grid.innerHTML = items.slice(0,8).map(g=>{
+      const title = g.title || g.titulo || "Foto";
+      const tag = g.tag || g.etiqueta || "DOURADOKIDS";
+      const img = g.imageUrl || g.url || g.foto || "";
+      return `
+        <article class="tile hoverlift">
+          <div class="top">
+            <span class="tag">${escapeHtml(tag)}</span>
+          </div>
+          <div class="thumb">
+            <img src="${escapeAttr(img)}" alt="${escapeAttr(title)}">
+          </div>
+          <h4>${escapeHtml(title)}</h4>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderToys(items){
+    const grid = document.getElementById("toysGrid");
+    if(!grid) return;
+    if(!items || !items.length){ grid.innerHTML = ""; return; }
+
+    const list = items.slice(0,12).map(t=>({
+      name: t.name || t.nome || "Brinquedo",
+      desc: t.desc || t.descricao || "",
+      imageUrl: t.imageUrl || t.foto || t.url || "",
+      tag: t.tag || t.categoria || "LOCAÇÃO",
+      price: t.price || t.valor || ""
+    }));
+
+    grid.innerHTML = list.map(t=>{
+      const priceLine = t.price ? `<p style="margin:0; font-weight:900; color:#111; position:relative; z-index:1">Valor: <span style="color:var(--primary)">${escapeHtml(t.price)}</span></p>` : "";
+      const reserveMsg = `Olá! Quero reservar o brinquedo: ${t.name}. Pode me informar disponibilidade e valores?`;
+      return `
+        <article class="tile hoverlift">
+          <div class="top">
+            <span class="tag">${escapeHtml(t.tag)}</span>
+            <a class="pill pill--outline" style="padding:10px 14px; font-size:12px; position:relative; z-index:1" href="${waLink(reserveMsg)}">Reservar</a>
+          </div>
+          <div class="thumb">
+            <img src="${escapeAttr(t.imageUrl)}" alt="${escapeAttr(t.name)}">
+          </div>
+          <h4>${escapeHtml(t.name)}</h4>
+          <p>${escapeHtml(t.desc)}</p>
+          ${priceLine}
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderPartners(items){
+    const grid = document.getElementById("partnersGrid");
+    if(!grid) return;
+    if(!items || !items.length){ grid.innerHTML = ""; return; }
+
+    const list = items.slice(0,12).map(p=>({
+      name: p.name || p.nome || "Profissional",
+      role: p.role || p.funcao || "Parceiro",
+      desc: p.desc || p.descricao || "",
+      imageUrl: p.imageUrl || p.foto || p.url || "",
+      tag: p.tag || p.etiqueta || "PARCEIRO"
+    }));
+
+    grid.innerHTML = list.map(p=>{
+      return `
+        <article class="tile hoverlift">
+          <div class="top">
+            <span class="tag">${escapeHtml(p.tag)}</span>
+          </div>
+          <div class="thumb" style="aspect-ratio: 16/12">
+            <img src="${escapeAttr(p.imageUrl)}" alt="${escapeAttr(p.name)}">
+          </div>
+          <h4>${escapeHtml(p.name)}</h4>
+          <p><b style="color:#111">${escapeHtml(p.role)}</b></p>
+          <p>${escapeHtml(p.desc)}</p>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function initCarouselNav(){
+    const track = document.getElementById("tTrack");
+    const prev = document.getElementById("tPrev");
+    const next = document.getElementById("tNext");
+    if(!track || !prev || !next) return;
+
+    const scrollByPage = (dir=1)=>{
+      const step = track.getBoundingClientRect().width;
+      track.scrollBy({left: dir*step, behavior:"smooth"});
+    };
+    prev.addEventListener("click", ()=>scrollByPage(-1));
+    next.addEventListener("click", ()=>scrollByPage(1));
+  }
+
+  function initAccordion(){
+    document.querySelectorAll(".accItem").forEach(item=>{
+      const btn = item.querySelector(".accBtn");
+      if(!btn) return;
+      btn.addEventListener("click", ()=>{
+        const isOpen = item.classList.contains("isOpen");
+        document.querySelectorAll(".accItem").forEach(i=>i.classList.remove("isOpen"));
+        if(!isOpen) item.classList.add("isOpen");
+      });
+    });
+  }
+
+  function initMobileMenu(){
+    const hamb = document.getElementById("hamb");
+    const menu = document.getElementById("mobileMenu");
+    if(!hamb || !menu) return;
+
+    hamb.addEventListener("click", ()=>{
+      const open = menu.style.display === "block";
+      menu.style.display = open ? "none" : "block";
+    });
+
+    menu.querySelectorAll("a").forEach(a=>{
+      a.addEventListener("click", ()=> menu.style.display = "none");
+    });
+  }
+
+  function escapeHtml(str){
+    return String(str ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;");
+  }
+  function escapeAttr(str){ return escapeHtml(str); }
+
+  /* =========================================================
+     MAPA (Leaflet) com pins via planilha
+  ========================================================= */
+  let map;
+  function initMap(locations){
+    const mapEl = document.getElementById("map");
+    if(!mapEl || !window.L) return;
+
+    const pts = (locations || []).map(l=>({
+      city: l.city || l.cidade || "",
+      state: l.state || l.uf || "",
+      lat: Number(l.lat || l.latitude),
+      lng: Number(l.lng || l.longitude),
+      note: l.note || l.obs || ""
+    })).filter(p=>Number.isFinite(p.lat) && Number.isFinite(p.lng));
+
+    const center = pts.length ? [pts[0].lat, pts[0].lng] : [-12.9683, -39.2616];
+    map = L.map("map", {scrollWheelZoom:false}).setView(center, pts.length ? 9 : 8);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    const primary = getComputedStyle(document.documentElement).getPropertyValue("--primary").trim() || "#FF7A18";
+    const icon = L.divIcon({
+      className: "",
+      html: `
+        <div style="
+          width:18px;height:18px;border-radius:999px;
+          background:${primary};
+          box-shadow: 0 10px 24px rgba(255,122,24,.22);
+          border:3px solid rgba(255,255,255,.95);
+        "></div>
+      `,
+      iconSize:[18,18],
+      iconAnchor:[9,9]
+    });
+
+    pts.forEach(p=>{
+      const title = `${p.city}${p.state ? " / " + p.state : ""}`;
+      const popup = `
+        <b>${escapeHtml(title)}</b><br>
+        <span style="color:#6B7280;font-weight:900">${escapeHtml(p.note || "Funcional Kids disponível")}</span><br><br>
+        <a href="${waLink("Olá! Vi no mapa que vocês atendem " + title + ". Quero saber turmas e horários do Funcional Kids.")}" target="_blank" rel="noopener"
+           style="display:inline-block;margin-top:6px;padding:10px 14px;border-radius:999px;background:#FF7A18;color:#fff;font-weight:900;text-decoration:none">
+          Chamar no WhatsApp
+        </a>
+      `;
+      L.marker([p.lat, p.lng], {icon}).addTo(map).bindPopup(popup);
+    });
+
+    if(pts.length > 1){
+      const bounds = L.latLngBounds(pts.map(p=>[p.lat,p.lng]));
+      map.fitBounds(bounds.pad(0.22));
+    }
+  }
+
+  /* =========================================================
+     BOOT
+  ========================================================= */
+  (async function boot(){
+    document.getElementById("year").textContent = new Date().getFullYear();
+    setWhatsAppCtas();
+    initMobileMenu();
+    initAccordion();
+    initHeroTuner();
+
+    const [stats, testimonials, gallery, toys, locations, partners] = await Promise.all([
+      loadSheet("stats"),
+      loadSheet("testimonials"),
+      loadSheet("gallery"),
+      loadSheet("toys"),
+      loadSheet("locations"),
+      loadSheet("partners"),
+    ]);
+
+    // diagnóstico no console
+    const failed = Object.keys(sheetLoadErrors);
+    if(failed.length){
+      console.warn("====================================");
+      console.warn("❌ Sheets falharam:", failed.join(", "));
+      failed.forEach(k=>{
+        console.warn(`- ${k}:`, sheetLoadErrors[k].url);
+      });
+      console.warn("Se abrir a URL acima no navegador e NÃO baixar CSV, é permissão/acesso da planilha.");
+      console.warn("====================================");
+    }
+
+    renderStats(stats);
+    renderTestimonials(testimonials);
+    renderGallery(gallery);
+    renderToys(toys);
+    renderPartners(partners);
+    initCarouselNav();
+
+    const waitLeaflet = async ()=>{
+      const t0 = Date.now();
+      while(!window.L && Date.now()-t0 < 2500) await new Promise(r=>setTimeout(r, 60));
+      initMap(locations);
+    };
+    waitLeaflet();
+  })();
+</script>
+</body>
+</html>
