@@ -1,4 +1,4 @@
-<!doctype html>
+<!doctype html> 
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
@@ -54,15 +54,6 @@
 
       /* =========================================================
          ✅ CONTROLES DO HERO (agora do jeito que você pediu)
-         1) ALTURA (corte por altura do container):
-            - heroHDelta: -10 diminui a altura (corta mais), +10 aumenta a altura (corta menos)
-         2) ENQUADRAMENTO X e Y (pan):
-            - heroPanX e heroPanY em passos (inteiros)
-         3) ZOOM (continua existindo, opcional)
-
-         Você pode controlar:
-         - manualmente aqui (valores inteiros)
-         - ou pelo painel (Hero Tuner) no JS (HERO_TUNER_ENABLED = true)
       ========================================================= */
 
       /* altura base do bloco do hero (desktop) */
@@ -93,6 +84,7 @@
 
     *{box-sizing:border-box}
     html,body{height:100%}
+    html{overflow-x:hidden;} /* ✅ evita “puxar” lateral no mobile (iOS/Android) */
     body{
       margin:0;
       font-family: "Manrope", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -101,13 +93,25 @@
       overflow-x:hidden;
     }
     a{color:inherit; text-decoration:none}
-    img{max-width:100%; display:block}
+
+    img, svg, video, canvas, iframe{
+      max-width:100%;
+      height:auto;
+      display:block;
+    }
+
     button{font-family:inherit}
 
     .container{
       width:min(var(--container), calc(100% - (var(--gutter) * 2)));
       margin:0 auto;
     }
+
+    /* ✅ ajuda a impedir overflow em grids/flex com textos longos */
+    .twoCol, .hero__content, .footerGrid, .statsGrid, .processRow, .tHead{
+      min-width:0;
+    }
+    .twoCol > *{min-width:0;}
 
     .muted{color:var(--muted)}
     .pill{
@@ -121,6 +125,7 @@
       transition: all .18s ease;
       user-select:none;
       white-space:nowrap;
+      max-width:100%; /* ✅ impede “estourar” em telas pequenas */
     }
     .pill--primary{
       background: linear-gradient(135deg, var(--primary), var(--kid-a));
@@ -304,11 +309,14 @@
       gap:12px;
       padding:12px 0;
       font-weight:900;
+      min-width:0;
     }
     .mobileMenu .menuCtas a small{
       color:var(--muted);
       font-weight:900;
       font-size:12px;
+      letter-spacing:.01em;
+      white-space:nowrap;
     }
 
     /* HERO */
@@ -321,12 +329,6 @@
       box-shadow: var(--shadow2);
       border:1px solid rgba(0,0,0,.06);
       background:#f4f4f4;
-
-      /* ✅ AQUI É O “CORTE POR ALTURA” QUE VOCÊ QUER:
-         - diminui a altura = corta mais (topo/baixo)
-         - aumenta a altura = corta menos
-         Ajuste via --heroHDelta (-10, +10...)
-      */
       min-height: calc(var(--heroHBase) + (var(--heroHDelta) * var(--heroHStep)));
     }
 
@@ -342,8 +344,9 @@
       background: rgba(255,255,255,.92);
       box-shadow: 0 16px 44px rgba(0,0,0,.12);
       backdrop-filter: blur(8px);
-      display:none; /* só aparece se habilitar no JS */
+      display:none;
       width: min(360px, calc(100% - 32px));
+      max-width: calc(100% - 32px); /* ✅ extra anti-overflow */
     }
     .heroTuner h4{
       margin:0 0 10px;
@@ -362,6 +365,7 @@
       gap:10px;
       padding:8px 0;
       border-top:1px dashed rgba(0,0,0,.12);
+      min-width:0;
     }
     .heroTuner .row:first-of-type{border-top:none; padding-top:0}
     .heroTuner .lbl{
@@ -428,15 +432,10 @@
         linear-gradient(0deg, var(--heroOverlay), var(--heroOverlay)),
         var(--img-hero-bg);
       background-size: cover;
-
-      /* ✅ ENQUADRAMENTO X e Y (inteiros) */
       background-position:
         calc(50% + (var(--heroPanX) * var(--heroPanStep)))
         calc(50% + (var(--heroPanY) * var(--heroPanStep)));
-
       filter: saturate(1.07);
-
-      /* ✅ zoom (opcional) */
       transform:
         scale(
           calc(
@@ -457,6 +456,7 @@
       gap:22px;
       padding: 44px;
       align-items:center;
+      min-width:0;
     }
     .heroCard{
       background:#fff;
@@ -472,6 +472,7 @@
       align-items:center;
       gap:16px;
       flex-wrap:wrap;
+      min-width:0;
     }
     .heroLink{
       display:inline-flex;
@@ -481,6 +482,7 @@
       color:#111;
       opacity:.9;
       padding:10px 6px;
+      max-width:100%;
     }
     .heroLink:hover{opacity:1; text-decoration:underline; text-underline-offset:6px}
     .heroLink svg{width:16px; height:16px; stroke:#111}
@@ -490,6 +492,7 @@
       flex-wrap:wrap;
       gap:10px;
       margin-top: 14px;
+      min-width:0;
     }
 
     /* STATS */
@@ -509,6 +512,7 @@
       border: 1px solid rgba(0,0,0,.06);
       box-shadow: var(--shadow);
       backdrop-filter: blur(6px);
+      min-width:0;
     }
     .stat{
       padding:18px 22px;
@@ -516,6 +520,7 @@
       flex-direction:column;
       gap:8px;
       position:relative;
+      min-width:0;
     }
     .stat:not(:last-child)::after{
       content:"";
@@ -544,6 +549,7 @@
       grid-template-columns: 1fr 1fr;
       gap: 42px;
       align-items:center;
+      min-width:0;
     }
 
     /* TRUST */
@@ -604,6 +610,7 @@
       justify-content:space-between;
       gap:18px;
       margin-bottom: 22px;
+      min-width:0;
     }
     .tNav{display:flex; gap:10px;}
     .navBtn{
@@ -628,6 +635,7 @@
       padding: 0;
       scrollbar-width: none;
       border-radius: 18px;
+      max-width:100%;
     }
     .track::-webkit-scrollbar{display:none}
 
@@ -657,10 +665,12 @@
       justify-content:space-between;
       gap:12px;
       position:relative;
+      min-width:0;
     }
     .tUser{
       display:flex; align-items:center; gap:12px;
       position:relative;
+      min-width:0;
     }
     .avatar{
       width:38px; height:38px;
@@ -668,6 +678,7 @@
       background: linear-gradient(135deg, rgba(53,198,244,.18), rgba(139,92,246,.18));
       border:1px solid rgba(0,0,0,.06);
       overflow:hidden;
+      flex: 0 0 auto;
     }
     .avatar img{width:100%; height:100%; object-fit:cover}
     .tName{font-weight:900; font-size:14px}
@@ -679,11 +690,13 @@
       border:1px solid rgba(0,0,0,.06);
       display:grid; place-items:center;
       position:relative;
+      flex: 0 0 auto;
     }
     .stars{
       display:flex; align-items:center; gap:4px;
       margin:10px 0 8px;
       position:relative;
+      flex-wrap:wrap;
     }
     .star{width:16px; height:16px; fill: #F59E0B; stroke:none;}
     .verified{
@@ -702,6 +715,7 @@
       font-size:13.5px;
       position:relative;
       max-width: 920px;
+      overflow-wrap:anywhere; /* ✅ evita overflow por strings grandes */
     }
 
     /* PARA QUEM É */
@@ -714,12 +728,15 @@
       padding:16px 0;
       border-bottom:1px solid rgba(0,0,0,.08);
       font-weight:900;
+      min-width:0;
     }
+    .li > div:last-child{min-width:0;}
     .li .liIc{
       width:34px; height:34px; border-radius:12px;
       border:1px solid rgba(0,0,0,.06);
       background: linear-gradient(135deg, rgba(255,122,24,.12), rgba(53,198,244,.12));
       display:grid; place-items:center;
+      flex: 0 0 auto;
     }
     .li:nth-child(2) .liIc{background:linear-gradient(135deg, rgba(34,197,94,.12), rgba(255,183,3,.12))}
     .li:nth-child(3) .liIc{background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(244,63,94,.12))}
@@ -741,7 +758,7 @@
     }
     .stamp--mid{
       position:absolute;
-      left:-18px;
+      left:-18px; /* ✅ no mobile vamos corrigir para não “sair” da tela */
       top: 52%;
       transform: translateY(-50%);
       width:96px; height:96px;
@@ -757,6 +774,7 @@
       justify-content:center;
       flex-wrap:wrap;
       margin-top: 22px;
+      max-width:100%;
     }
     .stepCard{
       width: 240px;
@@ -769,6 +787,7 @@
       display:flex;
       flex-direction:column;
       gap:10px;
+      max-width:100%;
     }
     .stepPill{
       align-self:flex-start;
@@ -779,6 +798,8 @@
       background: linear-gradient(135deg, var(--primary), var(--kid-d));
       padding:8px 12px;
       border-radius:999px;
+      white-space:nowrap;
+      max-width:100%;
     }
     .stepCard:nth-child(3) .stepPill{background:linear-gradient(135deg, var(--kid-a), var(--kid-b))}
     .stepCard:nth-child(5) .stepPill{background:linear-gradient(135deg, var(--kid-c), var(--kid-e))}
@@ -790,6 +811,7 @@
       display:grid;
       place-items:center;
       width: 36px;
+      flex: 0 0 auto;
     }
     .finalCard{
       border:1.5px solid rgba(255,122,24,.40);
@@ -831,6 +853,7 @@
       grid-template-columns: repeat(3, 1fr);
       gap:18px;
       margin-top: 22px;
+      min-width:0;
     }
     .bCard{
       padding:20px 20px 18px;
@@ -841,6 +864,7 @@
       display:flex; flex-direction:column; gap:10px;
       position:relative;
       overflow:hidden;
+      min-width:0;
     }
     .bCard::after{
       content:"";
@@ -862,6 +886,7 @@
       background: linear-gradient(135deg, rgba(255,122,24,.12), rgba(53,198,244,.12));
       display:grid; place-items:center;
       position:relative;
+      flex: 0 0 auto;
     }
     .bCard:nth-child(2) .bIc{background:linear-gradient(135deg, rgba(34,197,94,.14), rgba(255,183,3,.12))}
     .bCard:nth-child(3) .bIc{background:linear-gradient(135deg, rgba(139,92,246,.14), rgba(244,63,94,.12))}
@@ -883,16 +908,18 @@
       grid-template-columns: 1.1fr .9fr;
       gap: 24px;
       align-items:center;
+      min-width:0;
     }
     .ctaBanner h2{color:#fff}
     .ctaBanner p{color: rgba(255,255,255,.92); font-weight:800}
-    .ctaDecor{position:absolute; inset:0; pointer-events:none; opacity:.9;}
+    .ctaDecor{position:absolute; inset:0; pointer-events:none; opacity:.9; max-width:100%;}
     .ctaRight{
       display:flex;
       justify-content:flex-end;
       align-items:flex-end;
       position:relative;
       min-height: 260px;
+      min-width:0;
     }
     .ctaPerson{
       width:min(360px, 100%);
@@ -917,6 +944,7 @@
       border-radius: 18px;
       padding: 10px 12px;
       width: 220px;
+      max-width: calc(100% - 40px); /* ✅ não deixa sair do banner */
       display:flex; align-items:center; gap:10px;
     }
     .searchPill .line{
@@ -945,6 +973,7 @@
       gap: 30px;
       align-items:start;
       margin-top: 22px;
+      min-width:0;
     }
     .helpCard{
       padding:18px;
@@ -955,6 +984,7 @@
       display:flex;
       gap:14px;
       align-items:flex-start;
+      min-width:0;
     }
     .qIc{
       width:44px; height:44px;
@@ -968,13 +998,14 @@
     .helpCard b{font-weight:900}
     .helpCard p{margin:6px 0 12px; color:var(--muted); font-weight:800; line-height:1.55}
 
-    .acc{display:flex; flex-direction:column; gap:12px;}
+    .acc{display:flex; flex-direction:column; gap:12px; min-width:0;}
     .accItem{
       border-radius: 18px;
       border:1px solid rgba(0,0,0,.06);
       box-shadow: var(--shadow);
       background:#fff;
       overflow:hidden;
+      min-width:0;
     }
     .accBtn{
       width:100%;
@@ -987,12 +1018,14 @@
       cursor:pointer;
       text-align:left;
       gap:12px;
+      min-width:0;
     }
     .accBtn span{
       font-weight:900;
       color:#111;
       font-size:15px;
       line-height:1.25;
+      min-width:0;
     }
     .accBtn .plus{
       width:36px; height:36px;
@@ -1015,6 +1048,7 @@
       font-weight:800;
       line-height:1.65;
       font-size:14px;
+      overflow-wrap:anywhere;
     }
     .accItem.isOpen .accBody{max-height: 260px}
     .accItem.isOpen .accBtn .plus{transform: rotate(45deg)}
@@ -1025,12 +1059,14 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 18px;
       margin-top: 22px;
+      min-width:0;
     }
     .grid4{
       display:grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 18px;
       margin-top: 22px;
+      min-width:0;
     }
     .tile{
       padding:16px;
@@ -1043,6 +1079,7 @@
       gap:10px;
       position:relative;
       overflow:hidden;
+      min-width:0;
     }
     .tile::after{
       content:"";
@@ -1061,6 +1098,7 @@
       display:flex; align-items:center; justify-content:space-between; gap:12px;
       position:relative;
       z-index:1;
+      min-width:0;
     }
     .tag{
       font-size:12px;
@@ -1072,6 +1110,8 @@
       letter-spacing:.04em;
       position:relative;
       z-index:1;
+      white-space:nowrap;
+      max-width:100%;
     }
     .tile:nth-child(2) .tag{background:linear-gradient(135deg, var(--kid-c), var(--kid-e))}
     .tile:nth-child(3) .tag{background:linear-gradient(135deg, var(--kid-b), var(--kid-d))}
@@ -1085,10 +1125,11 @@
       background: rgba(0,0,0,.04);
       position:relative;
       z-index:1;
+      max-width:100%;
     }
     .thumb img{width:100%; height:100%; object-fit:cover}
-    .tile h4{margin:0; font-size:16px; font-weight:900; position:relative; z-index:1}
-    .tile p{margin:0; color:var(--muted); font-weight:800; line-height:1.55; font-size:13.5px; position:relative; z-index:1}
+    .tile h4{margin:0; font-size:16px; font-weight:900; position:relative; z-index:1; overflow-wrap:anywhere}
+    .tile p{margin:0; color:var(--muted); font-weight:800; line-height:1.55; font-size:13.5px; position:relative; z-index:1; overflow-wrap:anywhere}
 
     /* MAP */
     #map{
@@ -1099,6 +1140,7 @@
       box-shadow: var(--shadow2);
       background:#f7f7f7;
       margin-top: 18px;
+      max-width:100%;
     }
 
     /* FOOTER */
@@ -1118,6 +1160,7 @@
       justify-content:space-between;
       gap:18px;
       margin-bottom: 22px;
+      min-width:0;
     }
     .social{
       display:flex;
@@ -1125,6 +1168,9 @@
       gap:10px;
       color:var(--muted);
       font-weight:900;
+      min-width:0;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
     .socBtns{display:flex; gap:10px; align-items:center;}
     .soc{
@@ -1135,6 +1181,7 @@
       box-shadow: 0 10px 24px rgba(0,0,0,.06);
       display:grid; place-items:center;
       transition: all .18s ease;
+      flex: 0 0 auto;
     }
     .soc:hover{transform: translateY(-1px); box-shadow: 0 14px 30px rgba(0,0,0,.08)}
     .soc svg{width:18px; height:18px; stroke:var(--primary); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
@@ -1144,6 +1191,7 @@
       grid-template-columns: 1.1fr 1fr 1fr 1fr 1.2fr;
       gap: 18px;
       padding: 16px 0 18px;
+      min-width:0;
     }
     .col h5{margin:0 0 10px; font-weight:900; font-size:14px; color:#222;}
     .col a{
@@ -1152,6 +1200,7 @@
       font-weight:900;
       font-size:13px;
       color:var(--muted);
+      overflow-wrap:anywhere;
     }
     .col a:hover{color:#111; text-decoration:underline; text-underline-offset:6px}
     .appBadges{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;}
@@ -1169,6 +1218,8 @@
       gap:10px;
       box-shadow: 0 16px 34px rgba(0,0,0,.14);
       opacity:.95;
+      max-width:100%;
+      white-space:nowrap;
     }
     .storeBadge:hover{opacity:1}
     .storeBadge svg{width:18px; height:18px; fill:#fff}
@@ -1182,6 +1233,7 @@
       color:var(--muted);
       font-weight:900;
       font-size:12px;
+      flex-wrap:wrap;
     }
     .backTop{font-weight:900; color:var(--muted);}
     .backTop:hover{color:#111; text-decoration:underline; text-underline-offset:6px}
@@ -1205,7 +1257,6 @@
       .hero__content{padding: 22px}
       .hero__wrap{
         border-radius: 28px;
-        /* ✅ altura mobile também respeita heroHDelta */
         min-height: calc(var(--heroHBaseMobile) + (var(--heroHDelta) * var(--heroHStep)));
       }
 
@@ -1226,8 +1277,37 @@
 
       .heroTuner{top:12px; right:12px}
     }
+
     @media (max-width: 560px){
       :root{ --gutter: 18px; }
+
+      /* ✅ correção principal: elementos absolutos não “saem” pela lateral */
+      .stamp--mid{
+        left: 12px;
+        top: 12px;
+        bottom: auto;
+        transform: none;
+        width: 84px;
+        height: 84px;
+        border-width: 5px;
+      }
+      .stamp--mid .inner{
+        width: 62px;
+        height: 62px;
+        font-size: 24px;
+      }
+
+      /* ✅ wave não gera scroll horizontal no mobile */
+      .wave{
+        left:0;
+        width:100%;
+        bottom:-95px;
+        height:240px;
+      }
+
+      /* ✅ pills podem quebrar se necessário */
+      .pill{white-space:normal; line-height:1.2}
+
       .heroCard{border-radius: 32px; padding: 22px}
       .forPhoto{border-radius: 32px; min-height: 320px}
       .ctaPerson{border-radius: 32px}
@@ -2161,8 +2241,6 @@
       const csv = await fetchText(withBust(url));
       const data = parseCSV(csv);
 
-      // Se veio HTML (ex.: login), costuma ter "<!doctype" etc.
-      // Isso evita “parsear lixo” e te dá um erro claro.
       const raw = (csv || "").trim().toLowerCase();
       if(raw.startsWith("<!doctype") || raw.startsWith("<html")){
         throw new Error("Resposta HTML (provável falta de permissão pública no Google Sheets).");
@@ -2475,7 +2553,6 @@
       loadSheet("partners"),
     ]);
 
-    // diagnóstico no console
     const failed = Object.keys(sheetLoadErrors);
     if(failed.length){
       console.warn("====================================");
